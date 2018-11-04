@@ -1,191 +1,312 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.13.0 by Michael Rose
+  Copyright 2013-2018 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
   <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
 
-  <title>blog</title>
-  <meta name="description" content="A Jekyll theme for content-rich sites">
+<!-- begin _includes/seo.html --><title>Site Title</title>
+<meta name="description" content="An amazing website.">
 
-  <!-- Google Fonts loaded here depending on setting in _data/options.yml true loads font, blank does not-->
+
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Site Title">
+<meta property="og:title" content="Site Title">
+<meta property="og:url" content="/">
+
+
+
+
+
+
+
+
+
+
+
+
   
-    <link href='//fonts.googleapis.com/css?family=Lato:400,400italic' rel='stylesheet' type='text/css'>
-  
-  
-  <!-- Load up MathJax script if needed ... specify in /_data/options.yml file-->
-  
-    <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
   
 
-  <link rel="stylesheet" type="text/css" href="/css/tufte.css">
-  <!-- <link rel="stylesheet" type="text/css" href="/css/print.css" media="print"> -->
 
-  <link rel="canonical" href="/">
+<link rel="canonical" href="/">
 
-  <link rel="alternate" type="application/rss+xml" title="Tufte-Jekyll" href="/feed.xml" />
-</head>
 
-  <body class="full-width">
-    <!--- Header and nav template site-wide -->
-<header>
-    <nav class="group">
-	<a href="/"><img class="badge" src="/assets/img/badge_1.png" alt="CH"></a>
-	
-		
-  	
-		
-		    
-		      <a class="active" href="/" class="active">blog</a>
-		    
-	    
-  	
-		
-		    
-		      <a href="/about/">About</a>
-		    
-	    
-  	
-		
-		    
-		      <a href="/page/">page</a>
-		    
-	    
-  	
-		
-		    
-		      <a href="/css/print.css"></a>
-		    
-	    
-  	
-		
-  	
-	</nav>
-</header>
-    <article>
-        <h1 class="content-listing-header sans">Articles</h1>
-  <ul class="content-listing ">
-          
-        <li class="listing">
-          <hr class="slender">
-          <a href="/articles/18/caching-system"><h3 class="contrast">Caching system</h3></a>
-          <br><span class="smaller">November 4, 2018</span>  <br/>
-          <div><ul id="markdown-toc">
-  <li><a href="#comparison-between-redis-and-memcached" id="markdown-toc-comparison-between-redis-and-memcached">Comparison between Redis and Memcached</a>    <ul>
-      <li><a href="#value-types" id="markdown-toc-value-types">Value types</a></li>
-      <li><a href="#memory-efficiency" id="markdown-toc-memory-efficiency">Memory efficiency</a></li>
-      <li><a href="#scaling" id="markdown-toc-scaling">Scaling</a></li>
-      <li><a href="#eviction-policy" id="markdown-toc-eviction-policy">Eviction policy</a></li>
-    </ul>
-  </li>
-  <li><a href="#lru-implementation" id="markdown-toc-lru-implementation">LRU implementation</a></li>
-</ul>
 
-<h2 id="comparison-between-redis-and-memcached">Comparison between Redis and Memcached</h2>
 
-<p>In almost every system, there is some benefit to cache the results of some queries. Often this is done in memory, using either Memcached or Redis. Redis seems to be the goto solution as of 2018 as it is not just a key-value store, but a data structure store.</p>
 
-<p>This <a href="https://www.linkedin.com/pulse/memcached-vs-redis-which-one-pick-ranjeet-vimal/">post</a> by Ranjeet Vimal has a nice comparison between Memcached and Redis.</p>
 
-<h3 id="value-types">Value types</h3>
-<p>Memcached value type is essentially a simple byte array. It is great for small, static data like HTML code fragments. Redis value type can be lists, sorted sets, hashes etc, which are much more dynamic and powerful.</p>
 
-<h3 id="memory-efficiency">Memory efficiency</h3>
-<p>Due to the simpler value type, Memcached is more memory efficient than Redis.</p>
+  <script type="application/ld+json">
+    {
+      "@context": "http://schema.org",
+      "@type": "Person",
+      "name": "Your Name",
+      "url": null,
+      "sameAs": null
+    }
+  </script>
 
-<h3 id="scaling">Scaling</h3>
-<p>Memcached is multithreaded and easier to scale for beginners. Redis is single-threaded (which gives you more control) and needs sharding which is more complex to setup.</p>
 
-<h3 id="eviction-policy">Eviction policy</h3>
-<p>Memcached only supports LRU. Lazy eviction whereas Redis allows more fine-grained control. Redis supports at least 6 different eviction policies. It also supports both lazy and active eviction.</p>
 
-<h2 id="lru-implementation">LRU implementation</h2>
 
-<p>LRU stands for Least Recently Used and is a very widely used eviction strategy. Typically it is implemented using a queue. Every time an element is accessed, it is moved to the front of the queue. During eviction, we remove elements at the end of the queue. Some details can be found at <a href="https://www.geeksforgeeks.org/lru-cache-implementation/">GeeksforGeeks</a>.</p>
 
-<p>However, this exact implementation of LRU costs a lot of memory as the size of the queue grows with the number of keys. It is very common to instead sample a few keys (say 5) and then evict the key with the largest timestamps.</p>
-</div> 
-        </li>
-          
-        <li class="listing">
-          <hr class="slender">
-          <a href="/articles/15/tufte-style-jekyll-blog"><h3 class="contrast">Tufte-style Jekyll blog</h3></a>
-          <br><span class="smaller">February 19, 2015</span>  <br/>
-          <div><h1 id="to-be-deleted">TO BE DELETED</h1>
 
-<h2 id="introduction">Introduction</h2>
 
-<p><span class="newthought">The Tufte Jekyll theme</span>  is an attempt to create a website design with the look and feel of Edward Tufte’s books and handouts. Tufte’s style is known for its extensive use of sidenotes, tight integration of graphics with text, and well-set typography.</p>
+<!-- end _includes/seo.html -->
 
-</div> 
-        </li>
-          
-        <li class="listing">
-          <hr class="slender">
-          <a href="/articles/15/Edge-Cases"><h3 class="contrast">Edge Cases</h3></a>
-          <br><span class="smaller">February 17, 2015</span>  <br/>
-          <div><h1 id="to-be-deleted">TO BE DELETED</h1>
 
-<p>Some edge cases and cautionary examples on using Markdown for writing content using this theme. In particular, list syntax can really knot things up.</p>
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Site Title Feed">
 
-</div> 
-        </li>
-          
-        <li class="listing">
-          <hr class="slender">
-          <a href="/articles/15/welcome-to-jekyll"><h3 class="contrast">Welcome to Jekyll!</h3></a>
-          <br><span class="smaller">February 8, 2015</span>  <br/>
-          <div><h1 id="to-be-deleted">TO BE DELETED</h1>
+<!-- http://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<p>You’ll find this post in your <code class="highlighter-rouge">_posts</code> directory - edit this post and re-build (or run with the <code class="highlighter-rouge">-w</code> switch) to see your changes!
-To add new posts, simply add a file in the <code class="highlighter-rouge">_posts</code> directory that follows the convention: YYYY-MM-DD-name-of-post.ext.=]</p>
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
 
-<p>Jekyll also offers powerful support for code snippets:</p>
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
 
-<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">def</span> <span class="nf">print_hi</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
-  <span class="nb">puts</span> <span class="s2">"Hi, </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">"</span>
-<span class="k">end</span>
-<span class="n">print_hi</span><span class="p">(</span><span class="s1">'Tom'</span><span class="p">)</span>
-<span class="c1">#=&gt; prints 'Hi, Tom' to STDOUT.</span></code></pre></figure>
+<!--[if lte IE 9]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
 
-<p>Check out the <a href="http://jekyllrb.com">Jekyll docs</a> for more info on how to get the most out of Jekyll. File all bugs/feature requests at <a href="https://github.com/mojombo/jekyll">Jekyll’s GitHub repo</a>.</p>
 
-</div> 
-        </li>
-    
-  </ul>
-    </article>
-    <span class="print-footer">blog - clay harmon</span>
-    <footer>
-  <hr class="slender">
-  <ul class="footer-links">
-    <li><a href="mailto:hate@spam.net"><span class="icon-mail"></span></a></li>    
-    
-      <li>
-        <a href="//www.twitter.com/twitter_handle"><span class="icon-twitter"></span></a>
-      </li>
-    
-      <li>
-        <a href="//plus.google.com/+googlePlusName"><span class="icon-googleplus"></span></a>
-      </li>
-    
-      <li>
-        <a href="//github.com/GithubHandle"><span class="icon-github"></span></a>
-      </li>
-    
-      <li>
-        <a href="//www.flickr.com/photos/FlickrUserID"><span class="icon-flickr"></span></a>
-      </li>
-    
-      <li>
-        <a href="/feed"><span class="icon-feed"></span></a>
-      </li>
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--home">
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    <div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        <a class="site-title" href="/">Site Title</a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="https://mmistakes.github.io/minimal-mistakes/docs/quick-start-guide/" >Quick-Start Guide</a>
+            </li></ul>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
       
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="http://schema.org/Person">
+
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Your Name</h3>
+    
+    
+      <p class="author__bio" itemprop="description">
+        I am an amazing person.
+      </p>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="http://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Somewhere</span>
+        </li>
+      
+
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+  <div class="archive">
+    
+      <h1 id="page-title" class="page__title"></h1>
+    
+    
+
+<h3 class="archive__subtitle">Recent posts</h3>
+
+
+
+
+
+
+  </div>
+</div>
+    </div>
+
+    
+
+    <div class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
   </ul>
-<div class="credits">
-<span>&copy; 2018 &nbsp;&nbsp;CLAY HARMON</span></br> <br>
-<span>This site created with the <a href="//github.com/clayh53/tufte-jekyll">Tufte theme for Content-centric blogging </a> in <a href="//jekyllrb.com">Jekyll</a>.</span> 
-</div>  
-</footer>
+</div>
+
+<div class="page__footer-copyright">&copy; 2018 Your Name. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+
+
+
+
+
+
+
+
   </body>
 </html>
