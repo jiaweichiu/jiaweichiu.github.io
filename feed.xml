@@ -5,13 +5,61 @@
     <description>A Jekyll theme for content-rich sites</description>
     <link>/</link>
     <atom:link href="/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Sun, 04 Nov 2018 01:47:08 -0500</pubDate>
-    <lastBuildDate>Sun, 04 Nov 2018 01:47:08 -0500</lastBuildDate>
+    <pubDate>Sun, 04 Nov 2018 03:07:54 -0500</pubDate>
+    <lastBuildDate>Sun, 04 Nov 2018 03:07:54 -0500</lastBuildDate>
     <generator>Jekyll v3.0.1</generator>
     
       <item>
+        <title>Caching system</title>
+        <description>&lt;ul id=&quot;markdown-toc&quot;&gt;
+  &lt;li&gt;&lt;a href=&quot;#comparison-between-redis-and-memcached&quot; id=&quot;markdown-toc-comparison-between-redis-and-memcached&quot;&gt;Comparison between Redis and Memcached&lt;/a&gt;    &lt;ul&gt;
+      &lt;li&gt;&lt;a href=&quot;#value-types&quot; id=&quot;markdown-toc-value-types&quot;&gt;Value types&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#memory-efficiency&quot; id=&quot;markdown-toc-memory-efficiency&quot;&gt;Memory efficiency&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#scaling&quot; id=&quot;markdown-toc-scaling&quot;&gt;Scaling&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#eviction-policy&quot; id=&quot;markdown-toc-eviction-policy&quot;&gt;Eviction policy&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#lru-implementation&quot; id=&quot;markdown-toc-lru-implementation&quot;&gt;LRU implementation&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;comparison-between-redis-and-memcached&quot;&gt;Comparison between Redis and Memcached&lt;/h2&gt;
+
+&lt;p&gt;In almost every system, there is some benefit to cache the results of some queries. Often this is done in memory, using either Memcached or Redis. Redis seems to be the goto solution as of 2018 as it is not just a key-value store, but a data structure store.&lt;/p&gt;
+
+&lt;p&gt;This &lt;a href=&quot;https://www.linkedin.com/pulse/memcached-vs-redis-which-one-pick-ranjeet-vimal/&quot;&gt;post&lt;/a&gt; by Ranjeet Vimal has a nice comparison between Memcached and Redis.&lt;/p&gt;
+
+&lt;h3 id=&quot;value-types&quot;&gt;Value types&lt;/h3&gt;
+&lt;p&gt;Memcached value type is essentially a simple byte array. It is great for small, static data like HTML code fragments. Redis value type can be lists, sorted sets, hashes etc, which are much more dynamic and powerful.&lt;/p&gt;
+
+&lt;h3 id=&quot;memory-efficiency&quot;&gt;Memory efficiency&lt;/h3&gt;
+&lt;p&gt;Due to the simpler value type, Memcached is more memory efficient than Redis.&lt;/p&gt;
+
+&lt;h3 id=&quot;scaling&quot;&gt;Scaling&lt;/h3&gt;
+&lt;p&gt;Memcached is multithreaded and easier to scale for beginners. Redis is single-threaded (which gives you more control) and needs sharding which is more complex to setup.&lt;/p&gt;
+
+&lt;h3 id=&quot;eviction-policy&quot;&gt;Eviction policy&lt;/h3&gt;
+&lt;p&gt;Memcached only supports LRU. Lazy eviction whereas Redis allows more fine-grained control. Redis supports at least 6 different eviction policies. It also supports both lazy and active eviction.&lt;/p&gt;
+
+&lt;h2 id=&quot;lru-implementation&quot;&gt;LRU implementation&lt;/h2&gt;
+
+&lt;p&gt;LRU stands for Least Recently Used and is a very widely used eviction strategy. Typically it is implemented using a queue. Every time an element is accessed, it is moved to the front of the queue. During eviction, we remove elements at the end of the queue. Some details can be found at &lt;a href=&quot;https://www.geeksforgeeks.org/lru-cache-implementation/&quot;&gt;GeeksforGeeks&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;However, this exact implementation of LRU costs a lot of memory as the size of the queue grows with the number of keys. It is very common to instead sample a few keys (say 5) and then evict the key with the largest timestamps.&lt;/p&gt;
+</description>
+        <pubDate>Sun, 04 Nov 2018 00:00:00 -0400</pubDate>
+        <link>/articles/18/caching-system</link>
+        <guid isPermaLink="true">/articles/18/caching-system</guid>
+        
+        
+        <category>post</category>
+        
+      </item>
+    
+      <item>
         <title>Tufte-style Jekyll blog</title>
-        <description>&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+        <description>&lt;h1 id=&quot;to-be-deleted&quot;&gt;TO BE DELETED&lt;/h1&gt;
+
+&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
 
 &lt;p&gt;&lt;span class=&quot;newthought&quot;&gt;The Tufte Jekyll theme&lt;/span&gt;  is an attempt to create a website design with the look and feel of Edward Tufte’s books and handouts. Tufte’s style is known for its extensive use of sidenotes, tight integration of graphics with text, and well-set typography.&lt;!--more--&gt; The idea for this project is essentially cribbed wholesale from Tufte and R Markdown’s Tufte Handout format&lt;label for=&quot;One&quot; class=&quot;margin-toggle sidenote-number&quot;&gt;&lt;/label&gt;&lt;input type=&quot;checkbox&quot; id=&quot;One&quot; class=&quot;margin-toggle&quot; /&gt;&lt;span class=&quot;sidenote&quot;&gt;See &lt;a href=&quot;https://tufte-latex.github.io/tufte-latex/&quot;&gt;tufte-latex.github.io/tufte-latex/&lt;/a&gt; and &lt;a href=&quot;http://rmarkdown.rstudio.com/tufte_handout_format.html&quot;&gt;rmarkdown.rstudio.com/tufte_handout_format&lt;/a&gt; &lt;/span&gt; This page is an adaptation of the &lt;a href=&quot;http://rmarkdown.rstudio.com/examples/tufte-handout.pdf&quot;&gt;Tufte Handout PDF&lt;/a&gt;.&lt;/p&gt;
 
@@ -425,7 +473,6 @@ end   end end
     module Jekyll
     blah, blah...
    ```&lt;/code&gt; &lt;/pre&gt;
-
 </description>
         <pubDate>Thu, 19 Feb 2015 16:46:04 -0500</pubDate>
         <link>/articles/15/tufte-style-jekyll-blog</link>
@@ -440,17 +487,22 @@ end   end end
     
       <item>
         <title>Edge Cases</title>
-        <description>&lt;p&gt;Some edge cases and cautionary examples on using Markdown for writing content using this theme. In particular, list syntax can really knot things up.
+        <description>&lt;h1 id=&quot;to-be-deleted&quot;&gt;TO BE DELETED&lt;/h1&gt;
+
+&lt;p&gt;Some edge cases and cautionary examples on using Markdown for writing content using this theme. In particular, list syntax can really knot things up.
 &lt;!--more--&gt;&lt;/p&gt;
 
 &lt;ul id=&quot;markdown-toc&quot;&gt;
-  &lt;li&gt;&lt;a href=&quot;#mathjax-improperly-parsing-greater-and-less-than-and-ampersands-inside-blocks&quot; id=&quot;markdown-toc-mathjax-improperly-parsing-greater-and-less-than-and-ampersands-inside-blocks&quot;&gt;Mathjax improperly parsing greater and less than and ampersands inside blocks&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#edge-case-1-from-quxiaofeng&quot; id=&quot;markdown-toc-edge-case-1-from-quxiaofeng&quot;&gt;Edge Case 1 from Quxiaofeng:&lt;/a&gt;    &lt;ul&gt;
-      &lt;li&gt;&lt;a href=&quot;#no-blank-lines-between-markdown-list-items&quot; id=&quot;markdown-toc-no-blank-lines-between-markdown-list-items&quot;&gt;No blank lines between Markdown list items&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#related-algorithms&quot; id=&quot;markdown-toc-related-algorithms&quot;&gt;Related algorithms&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#why-this-matters&quot; id=&quot;markdown-toc-why-this-matters&quot;&gt;Why this matters&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#remarks-on-admm-version-2---one-blank-line-between-markdown-list-items&quot; id=&quot;markdown-toc-remarks-on-admm-version-2---one-blank-line-between-markdown-list-items&quot;&gt;Remarks on ADMM version 2 - one blank line between Markdown list items&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#liquid-tag-parsing-strangeness&quot; id=&quot;markdown-toc-liquid-tag-parsing-strangeness&quot;&gt;Liquid tag parsing strangeness&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#to-be-deleted&quot; id=&quot;markdown-toc-to-be-deleted&quot;&gt;TO BE DELETED&lt;/a&gt;    &lt;ul&gt;
+      &lt;li&gt;&lt;a href=&quot;#mathjax-improperly-parsing-greater-and-less-than-and-ampersands-inside-blocks&quot; id=&quot;markdown-toc-mathjax-improperly-parsing-greater-and-less-than-and-ampersands-inside-blocks&quot;&gt;Mathjax improperly parsing greater and less than and ampersands inside blocks&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#edge-case-1-from-quxiaofeng&quot; id=&quot;markdown-toc-edge-case-1-from-quxiaofeng&quot;&gt;Edge Case 1 from Quxiaofeng:&lt;/a&gt;        &lt;ul&gt;
+          &lt;li&gt;&lt;a href=&quot;#no-blank-lines-between-markdown-list-items&quot; id=&quot;markdown-toc-no-blank-lines-between-markdown-list-items&quot;&gt;No blank lines between Markdown list items&lt;/a&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;a href=&quot;#related-algorithms&quot; id=&quot;markdown-toc-related-algorithms&quot;&gt;Related algorithms&lt;/a&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;a href=&quot;#why-this-matters&quot; id=&quot;markdown-toc-why-this-matters&quot;&gt;Why this matters&lt;/a&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;a href=&quot;#remarks-on-admm-version-2---one-blank-line-between-markdown-list-items&quot; id=&quot;markdown-toc-remarks-on-admm-version-2---one-blank-line-between-markdown-list-items&quot;&gt;Remarks on ADMM version 2 - one blank line between Markdown list items&lt;/a&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;a href=&quot;#liquid-tag-parsing-strangeness&quot; id=&quot;markdown-toc-liquid-tag-parsing-strangeness&quot;&gt;Liquid tag parsing strangeness&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
     &lt;/ul&gt;
   &lt;/li&gt;
 &lt;/ul&gt;
@@ -632,7 +684,9 @@ Which &lt;em&gt;totally&lt;/em&gt; goofs up the layout CSS.&lt;/p&gt;
     
       <item>
         <title>Welcome to Jekyll!</title>
-        <description>&lt;p&gt;You’ll find this post in your &lt;code class=&quot;highlighter-rouge&quot;&gt;_posts&lt;/code&gt; directory - edit this post and re-build (or run with the &lt;code class=&quot;highlighter-rouge&quot;&gt;-w&lt;/code&gt; switch) to see your changes!
+        <description>&lt;h1 id=&quot;to-be-deleted&quot;&gt;TO BE DELETED&lt;/h1&gt;
+
+&lt;p&gt;You’ll find this post in your &lt;code class=&quot;highlighter-rouge&quot;&gt;_posts&lt;/code&gt; directory - edit this post and re-build (or run with the &lt;code class=&quot;highlighter-rouge&quot;&gt;-w&lt;/code&gt; switch) to see your changes!
 To add new posts, simply add a file in the &lt;code class=&quot;highlighter-rouge&quot;&gt;_posts&lt;/code&gt; directory that follows the convention: YYYY-MM-DD-name-of-post.ext.=]&lt;/p&gt;
 
 &lt;p&gt;Jekyll also offers powerful support for code snippets:&lt;/p&gt;
