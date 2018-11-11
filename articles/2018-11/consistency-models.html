@@ -155,7 +155,7 @@
       <span class="read-time" title="Estimated read time">
   
   
-    3 mins read
+    5 mins read
   
 </span>
 
@@ -164,7 +164,7 @@
   </header>
 
   <article class="post-content">
-    <p>Let’s take a look at this “graph” of <a href="https://jepsen.io/consistency">consistency models at jepsen.io</a>.</p>
+    <p>Let’s take a look at this tree of <a href="https://jepsen.io/consistency">consistency models at jepsen.io</a>.</p>
 
 <p><img src="/img/jepsen_consistency.png" alt="consistency models from jepsen.io" /></p>
 
@@ -201,7 +201,7 @@
 
 <p>Both sequential consistency and linearizability are about single operations. Sequential consistency is somewhat similar to serializability: it is for single operations instead of transactions. It says that no matter how you execute the operations concurrently, it is as if there is some order or permutation of these operations across all processors.</p>
 
-<p>Formal definition:</p>
+<p>Formal definition of sequential consistency:</p>
 <blockquote>
   <p>the result of any execution is the same as if the operations of all the processors were executed in some sequential order, and the operations of each individual processor appear in this sequence in the order specified by its program</p>
 </blockquote>
@@ -219,6 +219,26 @@
 <p>Unlike serializability which requires a total order, snapshot isolation only requires a partial order — sub-operations in transactions may interleave in arbitrary ways as long as there are no conflicts between the transactions.</p>
 
 <p>Remark: If I were to build a database, I will probably go with this model as well.</p>
+
+<p>Most notable problem with snapshot isolation is <em>write skews</em>. Consider the following scenario:</p>
+<ul>
+  <li>Transaction 1 reads variable x.</li>
+  <li>Transaction 2 reads variable y.</li>
+  <li>Transaction 1 writes the value it read to y. (y &lt;- x)</li>
+  <li>Transaction 2 writes the value it read to x. (x &lt;- y)</li>
+</ul>
+
+<p>Both transactions have a consistent view of the database and their write set do not overlap. However, we see that the values of x, y have been swapped. Suppose we have serializability instead and say transaction 1 completes before transaction 2. Then everything would be set to the initial value of x. There will be no swapping.</p>
+
+<p>Various databases have some hacks around snapshot isolation to mitigate the problem of write skews. See for example Postgres’ <a href="https://drkp.net/papers/ssi-vldb12.pdf">Serializable Snapshot Isolation technique</a>.</p>
+
+<h1 id="read-committed-total-available">Read Committed (total available)</h1>
+
+<p>For models like “snapshot isolation”, total availability is still impossible (during network partition) because we need a snapshot which is consistent across the cluster of machines. To obtain total availability, we can consider the “read committed” model.</p>
+
+<p>The read committed model is a transactional multi-object model. All it says is that transactions cannot observe writes from other transactions which have not committed, i.e., no dirty reads. However, there is no constraint on the ordering. That means if transaction 1 commits a write to variable X and transaction 2 starts and reads variable X, then the value read by transaction 2 may not be the value written by transaction 1. (If we need to sync the new value of X across all machines, then we will lose availability during network partitions.)</p>
+
+<p>Read committed can be achieved by <em>locking</em> on each row / key. There are some obvious problems. Say we want to count rows which fulfills a certain predicate. As we scan through rows in a transaction, we lock and unlock row by row, while concurrent transactions may be changing other rows that are not locked. If a row somehow gets shifted after the scan pointer, then it gets counted twice. If a row gets shifted before the scan pointer, then it does not get counted.</p>
 
   </article>
 </div>
