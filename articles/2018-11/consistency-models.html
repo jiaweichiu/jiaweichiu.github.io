@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="Understand the various consistency models out there.">
+  <meta name="keywords" content="blog and jekyll">
+  <meta name="author" content="Consistency models | Blog of Jiawei Chiu">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Consistency models | Blog of Jiawei Chiu">
+  <meta name="twitter:description" content="Understand the various consistency models out there.">
+  
+    <meta property="twitter:image" content="/img/leonids-logo.png">
+  
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="/articles/2018-11/consistency-models">
+  <meta property="og:title" content="Consistency models | Blog of Jiawei Chiu">
+  <meta property="og:description" content="Understand the various consistency models out there.">
+  
+    <meta property="og:image" content="/img/leonids-logo.png">
+  
+  <title>Consistency models | Blog of Jiawei Chiu</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="/css/font-awesome.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+
+  <link rel="canonical" href="/articles/2018-11/consistency-models">
+  <link rel="alternate" type="application/rss+xml" title="Blog of Jiawei Chiu" href="/feed.xml" />
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="/favicon.png">
+
+  <script type="text/javascript" async
+    src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+  </script>
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <a href="/">
+    <img src="/img/solth07212011.jpg" alt="" class="avatar">
+  </a>
+  
+  <a href="/" class="author_name">Jiawei</a>
+  <span class="author_job">Software engineer</span>
+  <span class="author_bio mbm">Just a simple blog that I hope to maintain!</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="/">home</a>
+      </li>
+       
+      <li class="nav-item">
+        <a href="/archive/">Archive</a>
+      </li>
+          
+      <li class="nav-item">
+        <a href="/categories/">Categories</a>
+      </li>
+            
+      <li class="nav-item">
+        <a href="/resume/">Resume</a>
+      </li>
+        
+      <li class="nav-item">
+        <a href="/tags/">Tags</a>
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="Consistency models">Consistency models</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        11 NOV 2018
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    3 mins read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <p>Let’s take a look at this “graph” of <a href="https://jepsen.io/consistency">consistency models at jepsen.io</a>.</p>
+
+<p><img src="/img/jepsen_consistency.png" alt="consistency models from jepsen.io" /></p>
+
+<p>The arrow means “is implied by”. For example, “strict serializable” implies both “serializable” and “linearizable”.</p>
+
+<p>As for the coloring:</p>
+<ul>
+  <li>Pink means “unavailable” during some types of network failures;</li>
+  <li>Orange means “sticky available”, i.e., non-faulty nodes continue to be available, assuming that clients stick to the same servers they are already talking to;</li>
+  <li>Blue means “total available”, which means every non-fault node is available, even when the network is completely down.</li>
+</ul>
+
+<h1 id="linearizable-versus-serializable">Linearizable versus serializable</h1>
+
+<p>Peter Bailis gave a <a href="http://www.bailis.org/blog/linearizability-versus-serializability/">nice summary</a>.</p>
+
+<p class="notice">Linearizable: single-operation, single-object, real-time order.</p>
+
+<p>Linearizability is the C in the CAP theorem. It means writes appear to be instantaneous, i.e., atomic consistency. However, it does not care about transactions.</p>
+
+<p class="notice">Serializable: multi-operation, multi-object, arbitrary total order.</p>
+
+<p>Serializability is about transactions. It is the I (Isolation) in ACID. It guarantees that a set of transactions (over multiple items) is equivalent to some serial execution (total ordering) of the transactions. You cannot interleave sub-operations between transactions. However, serializability does not care about the actual order of transactions. (Note: Order of operations <em>within</em> each transaction should be preserved.)</p>
+
+<p>Neither linearizability nor serializability is achievable without expensive coordination. This implies no full availability. And in practice, systems implement weaker versions of these for performance purposes.</p>
+
+<p>Finally we have <em>strict serializability</em>.</p>
+
+<p class="notice">Strict serializable: multi-operation, multi-object, real-time order.</p>
+
+<p>As we expect, it means transactions appear to execute sequentially (serializable) and in addition, the order is not arbitrary, but in the obvious order — whichever transaction arrives first gets completed first.</p>
+
+<h1 id="linearizable-implies-sequential-consistency">Linearizable implies sequential consistency</h1>
+
+<p>Both sequential consistency and linearizability are about single operations. Sequential consistency is somewhat similar to serializability: it is for single operations instead of transactions. It says that no matter how you execute the operations concurrently, it is as if there is some order or permutation of these operations across all processors.</p>
+
+<p>Formal definition:</p>
+<blockquote>
+  <p>the result of any execution is the same as if the operations of all the processors were executed in some sequential order, and the operations of each individual processor appear in this sequence in the order specified by its program</p>
+</blockquote>
+
+<p>Sequential consistency only claims there exists such an order of operations (program order). Linearizability is a stronger condition and implies sequential consistency. It says there exists such an order and moreover, this order is the order in which these operations or requests arrive.</p>
+
+<h1 id="serializability-implies-snapshot-isolation">Serializability implies snapshot isolation</h1>
+
+<p>Snapshot isolation is a weaker guarantee on transactions than serializability. It is adopted in many databases, e.g., MySQL, Postgres, MongoDB, because it offers much better performance than serializability. It is commonly implemented by MVCC (multiversion concurrency control), i.e., keeping multiple versions of the same value. Common point of confusion: In SQL, “serializable” often means “snapshot isolation” only.</p>
+
+<p>Snapshot isolation means that every transaction operates on an <em>independent</em> snapshot of the database. This allows multiple transactions to happen concurrently, based on the snapshots at the start of each transaction. However, if there are conflicts, say transaction 1 needed to modify an object X, but transaction 2 committed a write to X between transaction 1 start and transaction 1 commit,then transaction 1 must abort.</p>
+
+<p>One key feature of snapshot isolation is that when the transaction is done, its changes become visible atomically. (This seems like a basic requirement on transactions!) Hence, snapshot isolation also implies “read committed” which means there are no <em>dirty reads</em>, i.e., we cannot observe writes from transactions which have not committed.</p>
+
+<p>Unlike serializability which requires a total order, snapshot isolation only requires a partial order — sub-operations in transactions may interleave in arbitrary ways as long as there are no conflicts between the transactions.</p>
+
+<p>Remark: If I were to build a database, I will probably go with this model as well.</p>
+
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=/articles/2018-11/consistency-models" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=/articles/2018-11/consistency-models" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=/articles/2018-11/consistency-models" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=/articles/2018-11/consistency-models" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=/articles/2018-11/consistency-models" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2018 Jiawei. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="/js/main.js"></script>
+
+
+</body>
+</html>

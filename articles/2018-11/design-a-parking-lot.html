@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="Typical system design question. Design a parking lot.">
+  <meta name="keywords" content="blog and jekyll">
+  <meta name="author" content="Design a parking lot | Blog of Jiawei Chiu">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Design a parking lot | Blog of Jiawei Chiu">
+  <meta name="twitter:description" content="Typical system design question. Design a parking lot.">
+  
+    <meta property="twitter:image" content="/img/leonids-logo.png">
+  
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="/articles/2018-11/design-a-parking-lot">
+  <meta property="og:title" content="Design a parking lot | Blog of Jiawei Chiu">
+  <meta property="og:description" content="Typical system design question. Design a parking lot.">
+  
+    <meta property="og:image" content="/img/leonids-logo.png">
+  
+  <title>Design a parking lot | Blog of Jiawei Chiu</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="/css/font-awesome.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+
+  <link rel="canonical" href="/articles/2018-11/design-a-parking-lot">
+  <link rel="alternate" type="application/rss+xml" title="Blog of Jiawei Chiu" href="/feed.xml" />
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="/favicon.png">
+
+  <script type="text/javascript" async
+    src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+  </script>
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <a href="/">
+    <img src="/img/solth07212011.jpg" alt="" class="avatar">
+  </a>
+  
+  <a href="/" class="author_name">Jiawei</a>
+  <span class="author_job">Software engineer</span>
+  <span class="author_bio mbm">Just a simple blog that I hope to maintain!</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="/">home</a>
+      </li>
+       
+      <li class="nav-item">
+        <a href="/archive/">Archive</a>
+      </li>
+          
+      <li class="nav-item">
+        <a href="/categories/">Categories</a>
+      </li>
+            
+      <li class="nav-item">
+        <a href="/resume/">Resume</a>
+      </li>
+        
+      <li class="nav-item">
+        <a href="/tags/">Tags</a>
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="Design a parking lot">Design a parking lot</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        11 NOV 2018
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    1 min read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <p>Wanted to get acquainted with system design interview questions. “Designing a parking lot” seems like a typical question.</p>
+
+<p>Here are some resources:</p>
+<ul>
+  <li><a href="https://www.youtube.com/watch?v=DSGsa0pu8-k">Youtube video</a> from “Success in Tech”</li>
+  <li><a href="https://stackoverflow.com/questions/764933/amazon-interview-question-design-an-oo-parking-lot">Design an OO parking lot</a> from StackOverflow.</li>
+  <li><a href="https://www.geeksforgeeks.org/design-parking-lot-using-object-oriented-principles/">Design an OO parking lot</a> from GeeksforGeeks.</li>
+</ul>
+
+<p>The main skill being tested here I think is not OO, but understanding user requirements. The question seems very vague and we need to ask many questions to understand the requirements and the scope, and learn to take hints from the interviewer.</p>
+
+<p>Some questions to ask:</p>
+<ul>
+  <li>What kinds of vehicles do we support?</li>
+  <li>What are the sizes of the parking lots?</li>
+  <li>Can a bus take up multiple parking lots?</li>
+  <li>Is there handicapped parking?</li>
+  <li>Do we need to track availability?</li>
+  <li>Do we need to optimize the placement? Or do users make API calls to put vehicle at whichever location they like? If so, we need to make sure it makes sense?</li>
+  <li>Are there multiple floors?</li>
+  <li>Do we need to worry about concurrency?</li>
+  <li>Do we need to optimize pricing?</li>
+</ul>
+
+<p>As this is the first post regarding system design interview, there are some other standard questions to ask.</p>
+<ul>
+  <li>How many users? How much QPS to support?</li>
+  <li>How much data needs to be stored in memory/disk?</li>
+  <li>What is the latency requirement?</li>
+</ul>
+
+<p>Ideally, we want to lead the discussion and convince the interviewer that we have a lot of experience building large systems.</p>
+
+<p>There are always tradeoffs. Point them out.</p>
+
+<p>When discussing scalability, you want to recognize the bottlenecks. Maybe use NoSQL instead of relational databases, after some restructuring of your design.</p>
+
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=/articles/2018-11/design-a-parking-lot" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=/articles/2018-11/design-a-parking-lot" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=/articles/2018-11/design-a-parking-lot" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=/articles/2018-11/design-a-parking-lot" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=/articles/2018-11/design-a-parking-lot" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2018 Jiawei. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="/js/main.js"></script>
+
+
+</body>
+</html>
