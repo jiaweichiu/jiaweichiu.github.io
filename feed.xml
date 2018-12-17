@@ -6,7 +6,7 @@
     <link>/</link>
     <atom:link href="/feed.xml" rel="self" type="application/rss+xml"/>
     <pubDate>2018-12-17</pubDate>
-    <lastBuildDate>Mon, 17 Dec 2018 03:45:27 +0100</lastBuildDate>
+    <lastBuildDate>Mon, 17 Dec 2018 03:55:57 +0100</lastBuildDate>
     <generator>Jekyll v3.7.4</generator>
     
       <item>
@@ -35,7 +35,7 @@
 
 &lt;h1 id=&quot;als-modified-for-implicit&quot;&gt;ALS modified for implicit&lt;/h1&gt;
 
-&lt;p&gt;ALS works by fixing X, solving for Y and vice versa, repeatedly. For the explicit dataset, the solution for &lt;script type=&quot;math/tex&quot;&gt;x_u&lt;/script&gt; is&lt;/p&gt;
+&lt;p&gt;ALS works by fixing X, solving for Y and vice versa, repeatedly. For the explicit dataset, the solution for &lt;script type=&quot;math/tex&quot;&gt;x_u&lt;/script&gt; (for every user u) is&lt;/p&gt;
 
 &lt;script type=&quot;math/tex; mode=display&quot;&gt;x_u = (Y^T Y + \lambda I)^{-1} Y^T R(u)&lt;/script&gt;
 
