@@ -5,55 +5,67 @@
     <description>A simple blog!</description>
     <link>/</link>
     <atom:link href="/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>2018-11-11</pubDate>
-    <lastBuildDate>Sun, 11 Nov 2018 14:56:04 +0100</lastBuildDate>
+    <pubDate>2018-12-17</pubDate>
+    <lastBuildDate>Mon, 17 Dec 2018 03:41:54 +0100</lastBuildDate>
     <generator>Jekyll v3.7.4</generator>
     
       <item>
-        <title>Design a parking lot</title>
-        <description>&lt;p&gt;Wanted to get acquainted with system design interview questions. “Designing a parking lot” seems like a typical question.&lt;/p&gt;
+        <title>Implicit recommender</title>
+        <description>&lt;p&gt;&lt;a href=&quot;http://yifanhu.net/PUB/cf.pdf&quot;&gt;This paper&lt;/a&gt; by Yifan Hu et al. introduces me to implicit feedback for recommender systems and I like the paper. Recall the Netflix problem where a subset of user ratings are revealed and we want to predict ratings. Where ratings are present, we call it an &lt;strong&gt;explicit dataset&lt;/strong&gt;. In practice, what is more common is whether the user watched a movie or reserved a restaurant or clicked an ad. We only observe &lt;strong&gt;user interactions&lt;/strong&gt; and such a dataset is an &lt;strong&gt;implicit dataset&lt;/strong&gt;.&lt;/p&gt;
 
-&lt;p&gt;Here are some resources:&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;&lt;a href=&quot;https://www.youtube.com/watch?v=DSGsa0pu8-k&quot;&gt;Youtube video&lt;/a&gt; from “Success in Tech”&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://stackoverflow.com/questions/764933/amazon-interview-question-design-an-oo-parking-lot&quot;&gt;Design an OO parking lot&lt;/a&gt; from StackOverflow.&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://www.geeksforgeeks.org/design-parking-lot-using-object-oriented-principles/&quot;&gt;Design an OO parking lot&lt;/a&gt; from GeeksforGeeks.&lt;/li&gt;
-&lt;/ul&gt;
+&lt;p&gt;Advantage of an implicit dataset: More data is available in this form. Most users do not bother to give ratings.&lt;/p&gt;
 
-&lt;p&gt;The main skill being tested here I think is not OO, but understanding user requirements. The question seems very vague and we need to ask many questions to understand the requirements and the scope, and learn to take hints from the interviewer.&lt;/p&gt;
+&lt;p&gt;Disadvantage of an implicit dataset: Data is harder to interpret. Unlike an explicit dataset, whenever a user-item pair is missing, we cannot be sure whether it is because the user hasn’t interacted with the item, or because the user does not like the item.&lt;/p&gt;
 
-&lt;p&gt;Some questions to ask:&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;What kinds of vehicles do we support?&lt;/li&gt;
-  &lt;li&gt;What are the sizes of the parking lots?&lt;/li&gt;
-  &lt;li&gt;Can a bus take up multiple parking lots?&lt;/li&gt;
-  &lt;li&gt;Is there handicapped parking?&lt;/li&gt;
-  &lt;li&gt;Do we need to track availability?&lt;/li&gt;
-  &lt;li&gt;Do we need to optimize the placement? Or do users make API calls to put vehicle at whichever location they like? If so, we need to make sure it makes sense?&lt;/li&gt;
-  &lt;li&gt;Are there multiple floors?&lt;/li&gt;
-  &lt;li&gt;Do we need to worry about concurrency?&lt;/li&gt;
-  &lt;li&gt;Do we need to optimize pricing?&lt;/li&gt;
-&lt;/ul&gt;
+&lt;p&gt;We will consider &lt;strong&gt;ALS&lt;/strong&gt; (Alternating Least Squares) collaborative filtering. There are other methods for recommender engines, but ALS is what we will focus on for now. It is also known to perform well for users that have sufficiently interacted with the items. For relatively new users, content-based methods are more appropriate as they do not have to deal with the cold-start problem.&lt;/p&gt;
 
-&lt;p&gt;As this is the first post regarding system design interview, there are some other standard questions to ask.&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;How many users? How much QPS to support?&lt;/li&gt;
-  &lt;li&gt;How much data needs to be stored in memory/disk?&lt;/li&gt;
-  &lt;li&gt;What is the latency requirement?&lt;/li&gt;
-&lt;/ul&gt;
+&lt;h1 id=&quot;objective-function&quot;&gt;Objective function&lt;/h1&gt;
 
-&lt;p&gt;Ideally, we want to lead the discussion and convince the interviewer that we have a lot of experience building large systems.&lt;/p&gt;
+&lt;p&gt;First, recall the ALS method for the explicit dataset. Let &lt;script type=&quot;math/tex&quot;&gt;r_{ui}&lt;/script&gt; be user rating between user u and item i. Minimize the RMSE loss:&lt;/p&gt;
 
-&lt;p&gt;There are always tradeoffs. Point them out.&lt;/p&gt;
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\min_{x_u,y_i} \sum_{ui} (r_{ui} - x_u^T  y_i)^2 + \lambda(\sum_u \|x_u\|^2 + \sum_i \|y_i\|^2).&lt;/script&gt;
 
-&lt;p&gt;When discussing scalability, you want to recognize the bottlenecks. Maybe use NoSQL instead of relational databases, after some restructuring of your design.&lt;/p&gt;
+&lt;p&gt;Note that this first sum over u, i is over observed entries only. Also note that length of &lt;script type=&quot;math/tex&quot;&gt;x_u, y_i&lt;/script&gt; is the same, which is the number of “latent factors” in the model. Essentially, we are trying to approximate a matrix &lt;script type=&quot;math/tex&quot;&gt;R&lt;/script&gt; as a low rank matrix &lt;script type=&quot;math/tex&quot;&gt;XY^T&lt;/script&gt; where &lt;script type=&quot;math/tex&quot;&gt;x_u, y_i&lt;/script&gt; are &lt;em&gt;rows&lt;/em&gt; of &lt;script type=&quot;math/tex&quot;&gt;X,Y&lt;/script&gt; respectively.&lt;/p&gt;
+
+&lt;p&gt;For the implicit dataset, &lt;script type=&quot;math/tex&quot;&gt;r_{ui}&lt;/script&gt; is instead of the number of interactions between user u and item i. We introduce a new indicator variable &lt;script type=&quot;math/tex&quot;&gt;p_{ui}&lt;/script&gt; which is 1 if &lt;script type=&quot;math/tex&quot;&gt;r_{ui}&gt;0&lt;/script&gt; and 0 otherwise. We want instead a row rank approximation of the boolean matrix &lt;script type=&quot;math/tex&quot;&gt;P&lt;/script&gt;. The &lt;script type=&quot;math/tex&quot;&gt;r_{ui}&lt;/script&gt;’s however are used as a &lt;strong&gt;confidence value&lt;/strong&gt;:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\min_{x_u,y_i} \sum_{ui} c_{ui} (p_{ui} - x_u^T  y_i)^2 + \lambda(\sum_u \|x_u\|^2 + \sum_i \|y_i\|^2)&lt;/script&gt;
+
+&lt;p&gt;where the confidence value &lt;script type=&quot;math/tex&quot;&gt;c_{ui} = 1+\alpha r_{ui}&lt;/script&gt; or &lt;script type=&quot;math/tex&quot;&gt;c_{ui} = 1+\alpha \log(1 + r_{ui}/\epsilon)&lt;/script&gt;. Observe that most of &lt;script type=&quot;math/tex&quot;&gt;c_{ui}&lt;/script&gt;’s are equal to 1 as &lt;script type=&quot;math/tex&quot;&gt;r_{ui}&lt;/script&gt; is mostly zero. This will be important later.&lt;/p&gt;
+
+&lt;h1 id=&quot;als-modified-for-implicit&quot;&gt;ALS modified for implicit&lt;/h1&gt;
+
+&lt;p&gt;ALS works by fixing X, solving for Y and vice versa, repeatedly. For the explicit dataset, the solution for &lt;script type=&quot;math/tex&quot;&gt;x_u&lt;/script&gt; is&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;x_u = (Y^T Y + \lambda I)^{-1} Y^T R(u)&lt;/script&gt;
+
+&lt;p&gt;where &lt;script type=&quot;math/tex&quot;&gt;R(u)&lt;/script&gt; is a vector of length equal to the number of items. Remember Y is a tall matrix. The number of rows is the number of items. The number of columns is the number of factors. This equation is the standard least squares solution. The solution for &lt;script type=&quot;math/tex&quot;&gt;y_i&lt;/script&gt; is unsurprisingly &lt;script type=&quot;math/tex&quot;&gt;y_i = (X^T X + \lambda I)^{-1} X^T R(i)&lt;/script&gt; where &lt;script type=&quot;math/tex&quot;&gt;R(i)&lt;/script&gt; is a vector of length equal to the number of users.&lt;/p&gt;
+
+&lt;p&gt;For an &lt;strong&gt;implicit&lt;/strong&gt; dataset, we have to replace &lt;script type=&quot;math/tex&quot;&gt;R(u),R(i)&lt;/script&gt; with the boolean matrix values &lt;script type=&quot;math/tex&quot;&gt;P(u), P(i)&lt;/script&gt;. In addition, we need to bring in the confidence values. It can be shown that the solution for &lt;script type=&quot;math/tex&quot;&gt;x_u&lt;/script&gt; is&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;x_u = (Y^T C^u Y + \lambda I)^{-1} Y^T C^u R(u)&lt;/script&gt;
+
+&lt;p&gt;where &lt;script type=&quot;math/tex&quot;&gt;C^u&lt;/script&gt; is a square diagonal matrix. Its number of rows or columns is equal to the number of items. And its diagonal entry value is&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;C^u_{ii} = c_{ui}.&lt;/script&gt;
+
+&lt;p&gt;Let f be the number of factors. Typically it is really small so the matrix inversion is really cheap. The computational bottleneck lies in computing &lt;script type=&quot;math/tex&quot;&gt;Y^T C^u Y&lt;/script&gt; and we need a &lt;strong&gt;computation trick&lt;/strong&gt;. While &lt;script type=&quot;math/tex&quot;&gt;C^u&lt;/script&gt; is a very large matrix, most of its entries are equal to 1. In other words, if &lt;script type=&quot;math/tex&quot;&gt;C^u - I&lt;/script&gt; is a really &lt;strong&gt;sparse&lt;/strong&gt; matrix. Hence, we evaluate &lt;script type=&quot;math/tex&quot;&gt;Y^T C^u Y&lt;/script&gt; as&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;Y^T C^u Y =  Y^T (C^u - I) Y + Y^T Y.&lt;/script&gt;
+
+&lt;p&gt;The term &lt;script type=&quot;math/tex&quot;&gt;Y^T Y&lt;/script&gt; can be computed just once and used for every user u. Say Y is a &lt;script type=&quot;math/tex&quot;&gt;n\times f&lt;/script&gt; matrix and &lt;script type=&quot;math/tex&quot;&gt;n&lt;/script&gt; is the number of items. Then computing &lt;script type=&quot;math/tex&quot;&gt;Y^T Y&lt;/script&gt; takes only &lt;script type=&quot;math/tex&quot;&gt;O(nf^2)&lt;/script&gt; which is small. For each user, computing &lt;script type=&quot;math/tex&quot;&gt;Y^T (C^u - I) Y&lt;/script&gt; takes &lt;script type=&quot;math/tex&quot;&gt;O(n_u f^2)&lt;/script&gt; where &lt;script type=&quot;math/tex&quot;&gt;n_u&lt;/script&gt; is the number of item-ratings user &lt;script type=&quot;math/tex&quot;&gt;u&lt;/script&gt; has. Summing over users, we have &lt;script type=&quot;math/tex&quot;&gt;O(s f^2)&lt;/script&gt; where &lt;script type=&quot;math/tex&quot;&gt;s=\sum_u n_u&lt;/script&gt; is the support size of the interaction matrix &lt;script type=&quot;math/tex&quot;&gt;R&lt;/script&gt;. Including the matrix inversion, the overall running time for solving all &lt;script type=&quot;math/tex&quot;&gt;x_u&lt;/script&gt;’s is equal to &lt;script type=&quot;math/tex&quot;&gt;O(f^3 + n f^2 + s f^2)&lt;/script&gt;. This is &lt;strong&gt;linear&lt;/strong&gt; with the support size, while fixing &lt;script type=&quot;math/tex&quot;&gt;f&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;Solving for &lt;script type=&quot;math/tex&quot;&gt;y_i&lt;/script&gt;’s is similar and we omit the details.&lt;/p&gt;
+
+&lt;h1 id=&quot;remarks&quot;&gt;Remarks&lt;/h1&gt;
+&lt;p&gt;I thought the computation trick is very smart, even if it looks obvious in hindsight. While solving ALS is fast, evaluating any recommender solution can be the bottleneck instead. There are some tricks here but we will consider these another time.&lt;/p&gt;
 </description>
-        <pubDate>2018-11-11</pubDate>
-        <link>/articles/2018-11/design-a-parking-lot</link>
-        <guid isPermaLink="true">/articles/2018-11/design-a-parking-lot</guid>
+        <pubDate>2018-12-17</pubDate>
+        <link>/articles/2018-11/implicit-recommender</link>
+        <guid isPermaLink="true">/articles/2018-11/implicit-recommender</guid>
         
         
-        <category>systems</category>
+        <category>ml</category>
         
       </item>
     
@@ -94,28 +106,23 @@
 
 &lt;h1 id=&quot;linearizable-implies-sequential-consistency&quot;&gt;Linearizable implies sequential consistency&lt;/h1&gt;
 
-&lt;p&gt;Both sequential consistency and linearizability are about single operations. Sequential consistency is somewhat similar to serializability: it is for single operations instead of transactions. It says that no matter how you execute the operations concurrently, it is as if there is some order or permutation of these operations across all processors.&lt;/p&gt;
+&lt;p class=&quot;notice&quot;&gt;Sequential consistency: single-operation, single-object, arbitrary total order.&lt;/p&gt;
 
-&lt;p&gt;Formal definition of sequential consistency:&lt;/p&gt;
-&lt;blockquote&gt;
-  &lt;p&gt;the result of any execution is the same as if the operations of all the processors were executed in some sequential order, and the operations of each individual processor appear in this sequence in the order specified by its program&lt;/p&gt;
-&lt;/blockquote&gt;
+&lt;p&gt;Both sequential consistency and linearizability are about &lt;strong&gt;single operations&lt;/strong&gt;. Both sequential consistency and serializability are about existence of &lt;strong&gt;some total order&lt;/strong&gt; which is not necessarily the real-time order. In other words, no matter how you execute the operations concurrently, it is as if there is some order or permutation of these operations across all processors.&lt;/p&gt;
 
-&lt;p&gt;Sequential consistency only claims there exists such an order of operations (program order). Linearizability is a stronger condition and implies sequential consistency. It says there exists such an order and moreover, this order is the order in which these operations or requests arrive.&lt;/p&gt;
+&lt;p&gt;Obviously, linearizability implies sequential consistency.&lt;/p&gt;
 
 &lt;h1 id=&quot;serializability-implies-snapshot-isolation&quot;&gt;Serializability implies snapshot isolation&lt;/h1&gt;
 
-&lt;p&gt;Snapshot isolation is a weaker guarantee on transactions than serializability. It is adopted in many databases, e.g., MySQL, Postgres, MongoDB, because it offers much better performance than serializability. It is commonly implemented by MVCC (multiversion concurrency control), i.e., keeping multiple versions of the same value. Common point of confusion: In SQL, “serializable” often means “snapshot isolation” only.&lt;/p&gt;
+&lt;p&gt;Snapshot isolation is a weaker guarantee on transactions than serializability. It is adopted in many databases, e.g., MySQL, Postgres, MongoDB, because it offers much better performance than serializability. It is commonly implemented by &lt;strong&gt;MVCC&lt;/strong&gt; (multiversion concurrency control), i.e., keeping multiple versions of the same value, say in RocksDB. Common point of confusion: In SQL, “serializable” often means “snapshot isolation” only.&lt;/p&gt;
 
-&lt;p&gt;Snapshot isolation means that every transaction operates on an &lt;em&gt;independent&lt;/em&gt; snapshot of the database. This allows multiple transactions to happen concurrently, based on the snapshots at the start of each transaction. However, if there are conflicts, say transaction 1 needed to modify an object X, but transaction 2 committed a write to X between transaction 1 start and transaction 1 commit,then transaction 1 must abort.&lt;/p&gt;
+&lt;p&gt;Snapshot isolation means that every transaction operates on an &lt;strong&gt;independent snapshot&lt;/strong&gt; of the database. This allows multiple transactions to happen concurrently, based on the snapshots at the start of each transaction. However, if there are conflicts, say transaction 1 needed to modify an object X, but transaction 2 committed a write to X between transaction 1 start and transaction 1 commit,then transaction 1 must abort.&lt;/p&gt;
 
-&lt;p&gt;One key feature of snapshot isolation is that when the transaction is done, its changes become visible atomically. (This seems like a basic requirement on transactions!) Hence, snapshot isolation also implies “read committed” which means there are no &lt;em&gt;dirty reads&lt;/em&gt;, i.e., we cannot observe writes from transactions which have not committed.&lt;/p&gt;
+&lt;p&gt;One key feature of snapshot isolation is that when the transaction is done, its changes become visible atomically. (This seems like a basic requirement on transactions!) Hence, snapshot isolation also implies “read committed” which means there are no &lt;strong&gt;dirty reads&lt;/strong&gt;, i.e., we cannot observe writes from transactions which have not committed.&lt;/p&gt;
 
 &lt;p&gt;Unlike serializability which requires a total order, snapshot isolation only requires a partial order — sub-operations in transactions may interleave in arbitrary ways as long as there are no conflicts between the transactions.&lt;/p&gt;
 
-&lt;p&gt;Remark: If I were to build a database, I will probably go with this model as well.&lt;/p&gt;
-
-&lt;p&gt;Most notable problem with snapshot isolation is &lt;em&gt;write skews&lt;/em&gt;. Consider the following scenario:&lt;/p&gt;
+&lt;p&gt;The most notable problem with snapshot isolation is &lt;strong&gt;write skews&lt;/strong&gt;. Consider the following scenario:&lt;/p&gt;
 &lt;ul&gt;
   &lt;li&gt;Transaction 1 reads variable x.&lt;/li&gt;
   &lt;li&gt;Transaction 2 reads variable y.&lt;/li&gt;
@@ -129,13 +136,15 @@
 
 &lt;h1 id=&quot;read-committed-total-available&quot;&gt;Read Committed (total available)&lt;/h1&gt;
 
-&lt;p&gt;For models like “snapshot isolation”, total availability is still impossible (during network partition) because we need a snapshot which is consistent across the cluster of machines. To obtain total availability, we can consider the “read committed” model.&lt;/p&gt;
+&lt;p&gt;For models like “snapshot isolation”, total availability is still impossible (during network partition) because we need a snapshot which is consistent across the cluster of machines, and maintaining this consistent snapshot requires coordination. To obtain total availability, we can consider a weaker consistency model, the “read committed” model.&lt;/p&gt;
 
-&lt;p&gt;The read committed model is a transactional multi-object model. All it says is that transactions cannot observe writes from other transactions which have not committed, i.e., no dirty reads. However, there is no constraint on the ordering. That means if transaction 1 commits a write to variable X and transaction 2 starts and reads variable X, then the value read by transaction 2 may not be the value written by transaction 1. (If we need to sync the new value of X across all machines, then we will lose availability during network partitions.)&lt;/p&gt;
+&lt;p&gt;The read committed model is a transactional multi-object model. All it says is that transactions cannot observe writes from other transactions which have not committed, i.e., &lt;strong&gt;no dirty reads&lt;/strong&gt;.&lt;/p&gt;
 
-&lt;p&gt;Read committed can be achieved by &lt;em&gt;locking&lt;/em&gt; on each row / key. There are some obvious problems. Say we want to count rows which fulfills a certain predicate. As we scan through rows in a transaction, we lock and unlock row by row, while concurrent transactions may be changing other rows that are not locked. If a row somehow gets shifted after the scan pointer, then it gets counted twice. If a row gets shifted before the scan pointer, then it does not get counted.&lt;/p&gt;
+&lt;p&gt;However, there is no constraint on the ordering. That means if transaction 1 commits a write to variable X and transaction 2 starts and reads variable X, then the value read by transaction 2 may not be the value written by transaction 1. (If we need to sync the new value of X across all machines, then we will lose availability during network partitions.)&lt;/p&gt;
+
+&lt;p&gt;Read committed can be achieved by simply &lt;strong&gt;locking&lt;/strong&gt; on each row / key. There are some obvious problems, e.g., &lt;strong&gt;double count, missing count&lt;/strong&gt;. Say we want to count rows which fulfills a certain predicate. As we scan through rows in a transaction, we lock and unlock row by row, while concurrent transactions may be changing other rows that are not locked. If a row somehow gets shifted after the scan pointer, then it gets counted twice. If a row gets shifted before the scan pointer, then it does not get counted.&lt;/p&gt;
 </description>
-        <pubDate>2018-11-11</pubDate>
+        <pubDate>2018-12-17</pubDate>
         <link>/articles/2018-11/consistency-models</link>
         <guid isPermaLink="true">/articles/2018-11/consistency-models</guid>
         
@@ -316,7 +325,7 @@
   &lt;/ol&gt;
 &lt;/div&gt;
 </description>
-        <pubDate>2018-11-11</pubDate>
+        <pubDate>2018-12-17</pubDate>
         <link>/articles/2018-11/welcome-to-jekyll</link>
         <guid isPermaLink="true">/articles/2018-11/welcome-to-jekyll</guid>
         

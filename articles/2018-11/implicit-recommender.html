@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="Implicit dataset / feedback for recommender systems.">
+  <meta name="keywords" content="blog and jekyll">
+  <meta name="author" content="Implicit recommender | Blog of Jiawei Chiu">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Implicit recommender | Blog of Jiawei Chiu">
+  <meta name="twitter:description" content="Implicit dataset / feedback for recommender systems.">
+  
+    <meta property="twitter:image" content="/img/leonids-logo.png">
+  
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="/articles/2018-11/implicit-recommender">
+  <meta property="og:title" content="Implicit recommender | Blog of Jiawei Chiu">
+  <meta property="og:description" content="Implicit dataset / feedback for recommender systems.">
+  
+    <meta property="og:image" content="/img/leonids-logo.png">
+  
+  <title>Implicit recommender | Blog of Jiawei Chiu</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="/css/font-awesome.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+
+  <link rel="canonical" href="/articles/2018-11/implicit-recommender">
+  <link rel="alternate" type="application/rss+xml" title="Blog of Jiawei Chiu" href="/feed.xml" />
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="/favicon.png">
+
+  <script type="text/javascript" async
+    src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+  </script>
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <a href="/">
+    <img src="/img/solth07212011.jpg" alt="" class="avatar">
+  </a>
+  
+  <a href="/" class="author_name">Jiawei</a>
+  <span class="author_job">Software engineer</span>
+  <span class="author_bio mbm">Just a simple blog that I hope to maintain!</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="/">home</a>
+      </li>
+       
+      <li class="nav-item">
+        <a href="/archive/">Archive</a>
+      </li>
+          
+      <li class="nav-item">
+        <a href="/categories/">Categories</a>
+      </li>
+            
+      <li class="nav-item">
+        <a href="/resume/">Resume</a>
+      </li>
+        
+      <li class="nav-item">
+        <a href="/tags/">Tags</a>
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="Implicit recommender">Implicit recommender</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        15 NOV 2018
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    4 mins read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <p><a href="http://yifanhu.net/PUB/cf.pdf">This paper</a> by Yifan Hu et al. introduces me to implicit feedback for recommender systems and I like the paper. Recall the Netflix problem where a subset of user ratings are revealed and we want to predict ratings. Where ratings are present, we call it an <strong>explicit dataset</strong>. In practice, what is more common is whether the user watched a movie or reserved a restaurant or clicked an ad. We only observe <strong>user interactions</strong> and such a dataset is an <strong>implicit dataset</strong>.</p>
+
+<p>Advantage of an implicit dataset: More data is available in this form. Most users do not bother to give ratings.</p>
+
+<p>Disadvantage of an implicit dataset: Data is harder to interpret. Unlike an explicit dataset, whenever a user-item pair is missing, we cannot be sure whether it is because the user hasn’t interacted with the item, or because the user does not like the item.</p>
+
+<p>We will consider <strong>ALS</strong> (Alternating Least Squares) collaborative filtering. There are other methods for recommender engines, but ALS is what we will focus on for now. It is also known to perform well for users that have sufficiently interacted with the items. For relatively new users, content-based methods are more appropriate as they do not have to deal with the cold-start problem.</p>
+
+<h1 id="objective-function">Objective function</h1>
+
+<p>First, recall the ALS method for the explicit dataset. Let <script type="math/tex">r_{ui}</script> be user rating between user u and item i. Minimize the RMSE loss:</p>
+
+<script type="math/tex; mode=display">\min_{x_u,y_i} \sum_{ui} (r_{ui} - x_u^T  y_i)^2 + \lambda(\sum_u \|x_u\|^2 + \sum_i \|y_i\|^2).</script>
+
+<p>Note that this first sum over u, i is over observed entries only. Also note that length of <script type="math/tex">x_u, y_i</script> is the same, which is the number of “latent factors” in the model. Essentially, we are trying to approximate a matrix <script type="math/tex">R</script> as a low rank matrix <script type="math/tex">XY^T</script> where <script type="math/tex">x_u, y_i</script> are <em>rows</em> of <script type="math/tex">X,Y</script> respectively.</p>
+
+<p>For the implicit dataset, <script type="math/tex">r_{ui}</script> is instead of the number of interactions between user u and item i. We introduce a new indicator variable <script type="math/tex">p_{ui}</script> which is 1 if <script type="math/tex">r_{ui}>0</script> and 0 otherwise. We want instead a row rank approximation of the boolean matrix <script type="math/tex">P</script>. The <script type="math/tex">r_{ui}</script>’s however are used as a <strong>confidence value</strong>:</p>
+
+<script type="math/tex; mode=display">\min_{x_u,y_i} \sum_{ui} c_{ui} (p_{ui} - x_u^T  y_i)^2 + \lambda(\sum_u \|x_u\|^2 + \sum_i \|y_i\|^2)</script>
+
+<p>where the confidence value <script type="math/tex">c_{ui} = 1+\alpha r_{ui}</script> or <script type="math/tex">c_{ui} = 1+\alpha \log(1 + r_{ui}/\epsilon)</script>. Observe that most of <script type="math/tex">c_{ui}</script>’s are equal to 1 as <script type="math/tex">r_{ui}</script> is mostly zero. This will be important later.</p>
+
+<h1 id="als-modified-for-implicit">ALS modified for implicit</h1>
+
+<p>ALS works by fixing X, solving for Y and vice versa, repeatedly. For the explicit dataset, the solution for <script type="math/tex">x_u</script> is</p>
+
+<script type="math/tex; mode=display">x_u = (Y^T Y + \lambda I)^{-1} Y^T R(u)</script>
+
+<p>where <script type="math/tex">R(u)</script> is a vector of length equal to the number of items. Remember Y is a tall matrix. The number of rows is the number of items. The number of columns is the number of factors. This equation is the standard least squares solution. The solution for <script type="math/tex">y_i</script> is unsurprisingly <script type="math/tex">y_i = (X^T X + \lambda I)^{-1} X^T R(i)</script> where <script type="math/tex">R(i)</script> is a vector of length equal to the number of users.</p>
+
+<p>For an <strong>implicit</strong> dataset, we have to replace <script type="math/tex">R(u),R(i)</script> with the boolean matrix values <script type="math/tex">P(u), P(i)</script>. In addition, we need to bring in the confidence values. It can be shown that the solution for <script type="math/tex">x_u</script> is</p>
+
+<script type="math/tex; mode=display">x_u = (Y^T C^u Y + \lambda I)^{-1} Y^T C^u R(u)</script>
+
+<p>where <script type="math/tex">C^u</script> is a square diagonal matrix. Its number of rows or columns is equal to the number of items. And its diagonal entry value is</p>
+
+<script type="math/tex; mode=display">C^u_{ii} = c_{ui}.</script>
+
+<p>Let f be the number of factors. Typically it is really small so the matrix inversion is really cheap. The computational bottleneck lies in computing <script type="math/tex">Y^T C^u Y</script> and we need a <strong>computation trick</strong>. While <script type="math/tex">C^u</script> is a very large matrix, most of its entries are equal to 1. In other words, if <script type="math/tex">C^u - I</script> is a really <strong>sparse</strong> matrix. Hence, we evaluate <script type="math/tex">Y^T C^u Y</script> as</p>
+
+<script type="math/tex; mode=display">Y^T C^u Y =  Y^T (C^u - I) Y + Y^T Y.</script>
+
+<p>The term <script type="math/tex">Y^T Y</script> can be computed just once and used for every user u. Say Y is a <script type="math/tex">n\times f</script> matrix and <script type="math/tex">n</script> is the number of items. Then computing <script type="math/tex">Y^T Y</script> takes only <script type="math/tex">O(nf^2)</script> which is small. For each user, computing <script type="math/tex">Y^T (C^u - I) Y</script> takes <script type="math/tex">O(n_u f^2)</script> where <script type="math/tex">n_u</script> is the number of item-ratings user <script type="math/tex">u</script> has. Summing over users, we have <script type="math/tex">O(s f^2)</script> where <script type="math/tex">s=\sum_u n_u</script> is the support size of the interaction matrix <script type="math/tex">R</script>. Including the matrix inversion, the overall running time for solving all <script type="math/tex">x_u</script>’s is equal to <script type="math/tex">O(f^3 + n f^2 + s f^2)</script>. This is <strong>linear</strong> with the support size, while fixing <script type="math/tex">f</script>.</p>
+
+<p>Solving for <script type="math/tex">y_i</script>’s is similar and we omit the details.</p>
+
+<h1 id="remarks">Remarks</h1>
+<p>I thought the computation trick is very smart, even if it looks obvious in hindsight. While solving ALS is fast, evaluating any recommender solution can be the bottleneck instead. There are some tricks here but we will consider these another time.</p>
+
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=/articles/2018-11/implicit-recommender" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=/articles/2018-11/implicit-recommender" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=/articles/2018-11/implicit-recommender" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=/articles/2018-11/implicit-recommender" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=/articles/2018-11/implicit-recommender" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2018 Jiawei. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="/js/main.js"></script>
+
+
+</body>
+</html>
