@@ -196,7 +196,7 @@
 
 <p>For an <strong>implicit</strong> dataset, we have to replace <script type="math/tex">R(u),R(i)</script> with the boolean matrix values <script type="math/tex">P(u), P(i)</script>. In addition, we need to bring in the confidence values. It can be shown that the solution for <script type="math/tex">x_u</script> is</p>
 
-<script type="math/tex; mode=display">x_u = (Y^T C^u Y + \lambda I)^{-1} Y^T C^u R(u)</script>
+<script type="math/tex; mode=display">x_u = (Y^T C^u Y + \lambda I)^{-1} Y^T C^u P(u)</script>
 
 <p>where <script type="math/tex">C^u</script> is a square diagonal matrix. Its number of rows or columns is equal to the number of items. And its diagonal entry value is</p>
 
