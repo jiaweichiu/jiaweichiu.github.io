@@ -6,7 +6,7 @@
     <link>/</link>
     <atom:link href="/feed.xml" rel="self" type="application/rss+xml"/>
     <pubDate>2018-12-17</pubDate>
-    <lastBuildDate>Mon, 17 Dec 2018 03:55:57 +0100</lastBuildDate>
+    <lastBuildDate>Mon, 17 Dec 2018 07:36:48 +0100</lastBuildDate>
     <generator>Jekyll v3.7.4</generator>
     
       <item>
@@ -58,7 +58,9 @@
 &lt;p&gt;Solving for &lt;script type=&quot;math/tex&quot;&gt;y_i&lt;/script&gt;’s is similar and we omit the details.&lt;/p&gt;
 
 &lt;h1 id=&quot;remarks&quot;&gt;Remarks&lt;/h1&gt;
-&lt;p&gt;I thought the computation trick is very smart, even if it looks obvious in hindsight. While solving ALS is fast, evaluating any recommender solution can be the bottleneck instead. There are some tricks here but we will consider these another time.&lt;/p&gt;
+&lt;p&gt;Sparse, diagonal, low rank matrices are nice to work with, and so are linear combinations of them. Here we are using “diagonal + sparse”.&lt;/p&gt;
+
+&lt;p&gt;As of Dec 2018, Spark only supports ALS for implicit datasets/feedback. See for example &lt;a href=&quot;https://spark.apache.org/docs/latest/mllib-collaborative-filtering.html#collaborative-filtering&quot;&gt;this link&lt;/a&gt;. I guess the reason is that in practice, it is rare to find large explicit datasets that needs the brute force of Spark, whereas implicit datasets tend to be much bigger and common.&lt;/p&gt;
 </description>
         <pubDate>2018-12-17</pubDate>
         <link>/articles/2018-11/implicit-recommender</link>

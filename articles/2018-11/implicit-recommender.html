@@ -155,7 +155,7 @@
       <span class="read-time" title="Estimated read time">
   
   
-    4 mins read
+    5 mins read
   
 </span>
 
@@ -211,7 +211,9 @@
 <p>Solving for <script type="math/tex">y_i</script>’s is similar and we omit the details.</p>
 
 <h1 id="remarks">Remarks</h1>
-<p>I thought the computation trick is very smart, even if it looks obvious in hindsight. While solving ALS is fast, evaluating any recommender solution can be the bottleneck instead. There are some tricks here but we will consider these another time.</p>
+<p>Sparse, diagonal, low rank matrices are nice to work with, and so are linear combinations of them. Here we are using “diagonal + sparse”.</p>
+
+<p>As of Dec 2018, Spark only supports ALS for implicit datasets/feedback. See for example <a href="https://spark.apache.org/docs/latest/mllib-collaborative-filtering.html#collaborative-filtering">this link</a>. I guess the reason is that in practice, it is rare to find large explicit datasets that needs the brute force of Spark, whereas implicit datasets tend to be much bigger and common.</p>
 
   </article>
 </div>
