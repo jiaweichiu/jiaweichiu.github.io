@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="Study merge operators in RocksDB.">
+  <meta name="keywords" content="blog and jekyll">
+  <meta name="author" content="RocksDB merge operators | Blog of Jiawei Chiu">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="RocksDB merge operators | Blog of Jiawei Chiu">
+  <meta name="twitter:description" content="Study merge operators in RocksDB.">
+  
+    <meta property="twitter:image" content="/img/leonids-logo.png">
+  
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="/articles/2018-12/rocksdb-merge-operators">
+  <meta property="og:title" content="RocksDB merge operators | Blog of Jiawei Chiu">
+  <meta property="og:description" content="Study merge operators in RocksDB.">
+  
+    <meta property="og:image" content="/img/leonids-logo.png">
+  
+  <title>RocksDB merge operators | Blog of Jiawei Chiu</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="/css/font-awesome.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+
+  <link rel="canonical" href="/articles/2018-12/rocksdb-merge-operators">
+  <link rel="alternate" type="application/rss+xml" title="Blog of Jiawei Chiu" href="/feed.xml" />
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="/favicon.png">
+
+  <script type="text/javascript" async
+    src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+  </script>
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <a href="/">
+    <img src="/img/solth07212011.jpg" alt="" class="avatar">
+  </a>
+  
+  <a href="/" class="author_name">Jiawei</a>
+  <span class="author_job">Software engineer</span>
+  <span class="author_bio mbm">Just a simple blog that I hope to maintain!</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="/">home</a>
+      </li>
+       
+      <li class="nav-item">
+        <a href="/archive/">Archive</a>
+      </li>
+          
+      <li class="nav-item">
+        <a href="/categories/">Categories</a>
+      </li>
+            
+      <li class="nav-item">
+        <a href="/resume/">Resume</a>
+      </li>
+        
+      <li class="nav-item">
+        <a href="/tags/">Tags</a>
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="RocksDB merge operators">RocksDB merge operators</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        29 DEC 2018
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    15 mins read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <p>RocksDB is a reliable and efficient embedded key-value store. It can be used to power databases such as MySQL (see MyRocks). RocksDB came from LevelDB but has many additional features. One such feature is “merge operators”. The basic idea is that if the “value” is a list or a set, you would not want to keep rewriting the entire list or set each time you insert or delete an element. Instead, you want to keep pushing “merge operands” such that when someone queries for a key, we merge all these operands to arrive at a final result for the given key.</p>
+
+<p>Take for example the “value” being a list of strings. Each “merge operand” can be a list of strings to be appended to the current list of strings. A merge is as simple as concatenating all the merge operands.</p>
+
+<p>Would it not be inefficient if for every query, we need to read lots of list fragments and concatenate them? Actually no. The reason is that during compaction (an important operation of LSM trees), merges can happen such that all these list fragments get concatenated or merged into one.</p>
+
+<p>Things get more tricky when someone holds a snapshot. In this case, we cannot merge everything. Take for example MMMSMMMM where M denotes a merge operand and S denotes a snapshot. In this case, when compaction happens, we cannot merge all the 7 M’s because otherwise, our snapshot will be confused as it would not be able to see the result of 3 M’s. Instead, the best we can do here is to get M1-S-M2 where M1 is the result of merging MMM and M2 is the result of merging MMMM.</p>
+
+<h1 id="case-study-sets-of-strings">Case study: Sets of strings</h1>
+
+<p>We are going to work through an example where the “value” is a set of strings. For simplicity, we only allow “insert” in this example. If you want “delete”, you will need to keep two lists: one for inserted elements and one for deleted elements. The list of deleted elements are like “tomb markers”.</p>
+
+<p>For serialization, we will use protocol buffers. Here is the trivial proto definition:</p>
+<div class="language-proto highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// protoc merge.proto --cpp_out=./
+</span>
+<span class="na">syntax</span> <span class="o">=</span> <span class="s">"proto3"</span><span class="p">;</span>
+
+<span class="kd">message</span> <span class="nc">MyList</span> <span class="p">{</span>
+  <span class="k">repeated</span> <span class="kt">string</span> <span class="na">data</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Next we have some routine serialization and deserialization utility functions. We will be lazy and not propagate errors because this is just an example not production code.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">Deserialize</span><span class="p">(</span><span class="k">const</span> <span class="n">Slice</span> <span class="o">&amp;</span><span class="n">slice</span><span class="p">,</span> <span class="n">MyList</span> <span class="o">*</span><span class="n">val</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">// Ideally, we like a ParseFromStringView to avoid calling slice.ToString
+</span>  <span class="c1">// which will lead to string copying.
+</span>  <span class="c1">// Here, we use Boost to create a istream from slice and ParseFromIstream.
+</span>  <span class="k">namespace</span> <span class="n">bio</span> <span class="o">=</span> <span class="n">boost</span><span class="o">::</span><span class="n">iostreams</span><span class="p">;</span>
+  <span class="n">bio</span><span class="o">::</span><span class="n">basic_array_source</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span> <span class="n">src</span><span class="p">(</span><span class="n">slice</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">slice</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+  <span class="n">bio</span><span class="o">::</span><span class="n">stream</span><span class="o">&lt;</span><span class="n">bio</span><span class="o">::</span><span class="n">basic_array_source</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;&gt;</span> <span class="n">stream</span><span class="p">(</span><span class="n">src</span><span class="p">);</span>
+  <span class="n">CHECK</span><span class="p">(</span><span class="n">val</span><span class="o">-&gt;</span><span class="n">ParseFromIstream</span><span class="p">(</span><span class="o">&amp;</span><span class="n">stream</span><span class="p">));</span>
+  <span class="c1">// The lazy version of the above:
+</span>  <span class="c1">// CHECK(val-&gt;ParseFromString(slice.ToString()));
+</span><span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">Serialize</span><span class="p">(</span><span class="k">const</span> <span class="n">MyList</span> <span class="o">&amp;</span><span class="n">val</span><span class="p">,</span> <span class="n">string</span> <span class="o">*</span><span class="n">out</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">CHECK</span><span class="p">(</span><span class="n">val</span><span class="p">.</span><span class="n">SerializeToString</span><span class="p">(</span><span class="n">out</span><span class="p">));</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Before we have our merge operator, we need some more utilities.</p>
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">DeserializeInsert</span><span class="p">(</span><span class="k">const</span> <span class="n">Slice</span> <span class="n">slice</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">set</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span> <span class="o">*</span><span class="n">out</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">MyList</span> <span class="n">v</span><span class="p">;</span>
+  <span class="n">Deserialize</span><span class="p">(</span><span class="n">slice</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">);</span>
+  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">v</span><span class="p">.</span><span class="n">data_size</span><span class="p">();</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">out</span><span class="o">-&gt;</span><span class="n">insert</span><span class="p">(</span><span class="n">v</span><span class="p">.</span><span class="n">data</span><span class="p">(</span><span class="n">i</span><span class="p">));</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span> <span class="n">MyList</span> <span class="n">BuildListHelper</span><span class="p">(</span><span class="k">const</span> <span class="n">T</span> <span class="o">&amp;</span><span class="n">a</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">MyList</span> <span class="n">out</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="n">string</span> <span class="o">&amp;</span><span class="n">s</span> <span class="o">:</span> <span class="n">a</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">out</span><span class="p">.</span><span class="n">add_data</span><span class="p">(</span><span class="n">s</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">out</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">auto</span> <span class="n">BuildList</span> <span class="o">=</span> <span class="n">BuildListHelper</span><span class="o">&lt;</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;&gt;</span><span class="p">;</span>
+<span class="k">auto</span> <span class="n">BuildListFromSet</span> <span class="o">=</span> <span class="n">BuildListHelper</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">set</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;&gt;</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>The first function <code class="highlighter-rouge">DeserializeInsert</code> deserializes the given slice and insert everything it saw into the given set of strings. The functions <code class="highlighter-rouge">BuildList</code>, <code class="highlighter-rouge">BuildListFromSet</code> simply build <code class="highlighter-rouge">MyList</code> (proto) from a vector of strings or a set of strings.</p>
+
+<p>Now, we have the interesting part: the definition of our merge operator.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">AddOperator</span> <span class="o">:</span> <span class="k">public</span> <span class="n">MergeOperator</span> <span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+  <span class="kt">bool</span> <span class="n">FullMergeV2</span><span class="p">(</span><span class="k">const</span> <span class="n">MergeOperationInput</span> <span class="o">&amp;</span><span class="n">merge_in</span><span class="p">,</span>
+                   <span class="n">MergeOperationOutput</span> <span class="o">*</span><span class="n">merge_out</span><span class="p">)</span> <span class="k">const</span> <span class="k">override</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">set</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">out</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">existing_size</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">// For logging.
+</span>    <span class="k">if</span> <span class="p">(</span><span class="n">merge_in</span><span class="p">.</span><span class="n">existing_value</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">DeserializeInsert</span><span class="p">(</span><span class="o">*</span><span class="n">merge_in</span><span class="p">.</span><span class="n">existing_value</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">out</span><span class="p">);</span>
+      <span class="n">existing_size</span> <span class="o">=</span> <span class="n">out</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">Slice</span> <span class="n">s</span> <span class="o">:</span> <span class="n">merge_in</span><span class="p">.</span><span class="n">operand_list</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">DeserializeInsert</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">out</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">MyList</span> <span class="n">out2</span> <span class="o">=</span> <span class="n">BuildListFromSet</span><span class="p">(</span><span class="n">out</span><span class="p">);</span>
+    <span class="n">Serialize</span><span class="p">(</span><span class="n">out2</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">merge_out</span><span class="o">-&gt;</span><span class="n">new_value</span><span class="p">);</span>
+    <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">"FullMerge: existing_size="</span> <span class="o">&lt;&lt;</span> <span class="n">existing_size</span>
+              <span class="o">&lt;&lt;</span> <span class="s">" num_operands="</span> <span class="o">&lt;&lt;</span> <span class="n">merge_in</span><span class="p">.</span><span class="n">operand_list</span><span class="p">.</span><span class="n">size</span><span class="p">()</span>
+              <span class="o">&lt;&lt;</span> <span class="s">" final_list_size="</span> <span class="o">&lt;&lt;</span> <span class="n">out2</span><span class="p">.</span><span class="n">data_size</span><span class="p">();</span>
+    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="kt">bool</span> <span class="n">PartialMergeMulti</span><span class="p">(</span><span class="k">const</span> <span class="n">Slice</span> <span class="o">&amp;</span><span class="n">key</span><span class="p">,</span>
+                         <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">deque</span><span class="o">&lt;</span><span class="n">Slice</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">operand_list</span><span class="p">,</span>
+                         <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="o">*</span><span class="n">new_value</span><span class="p">,</span>
+                         <span class="n">Logger</span> <span class="o">*</span><span class="n">logger</span><span class="p">)</span> <span class="k">const</span> <span class="k">override</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">set</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">out</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">Slice</span> <span class="n">s</span> <span class="o">:</span> <span class="n">operand_list</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">DeserializeInsert</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">out</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">MyList</span> <span class="n">out2</span> <span class="o">=</span> <span class="n">BuildListFromSet</span><span class="p">(</span><span class="n">out</span><span class="p">);</span>
+    <span class="n">Serialize</span><span class="p">(</span><span class="n">out2</span><span class="p">,</span> <span class="n">new_value</span><span class="p">);</span>
+    <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">"PartialMerge: "</span> <span class="o">&lt;&lt;</span> <span class="n">operand_list</span><span class="p">.</span><span class="n">size</span><span class="p">()</span>
+              <span class="o">&lt;&lt;</span> <span class="s">" operands, final list size "</span> <span class="o">&lt;&lt;</span> <span class="n">out2</span><span class="p">.</span><span class="n">data_size</span><span class="p">();</span>
+    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">Name</span><span class="p">()</span> <span class="k">const</span> <span class="k">override</span> <span class="p">{</span> <span class="k">return</span> <span class="s">"AddOperator"</span><span class="p">;</span> <span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>Notice we define two very similar functions. One is a full merge. The other is a partial merge. The full merge may have an “existing value” whereas a partial merge does not. Otherwise, they are the same. We did not like using the <code class="highlighter-rouge">AssociativeMergeOperator</code> because it can only combine two lists at a time and if we need to combining <code class="highlighter-rouge">N</code> lists, then we may need to do <code class="highlighter-rouge">O(N^2)</code> work, roughly speaking. We also do some logging to better understand what is happening in our toy example.</p>
+
+<p>Next, we have our actual class <code class="highlighter-rouge">MyLists</code> that uses RocksDB to keep a key-value store from string to a set of strings. This part is somewhat straightforward.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#define CHECK_STATUS(s)                                                        \
+  {                                                                            \
+    auto status = s;                                                           \
+    CHECK(status.ok()) &lt;&lt; status.ToString();                                   \
+  }
+</span>
+<span class="k">class</span> <span class="nc">MyLists</span> <span class="p">{</span>
+<span class="k">protected</span><span class="o">:</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">DB</span><span class="o">&gt;</span> <span class="n">db_</span><span class="p">;</span>
+  <span class="n">WriteOptions</span> <span class="n">write_option_</span><span class="p">;</span>
+  <span class="n">ReadOptions</span> <span class="n">get_option_</span><span class="p">;</span>
+
+<span class="k">public</span><span class="o">:</span>
+  <span class="k">explicit</span> <span class="n">MyLists</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">DB</span><span class="o">&gt;</span> <span class="n">db</span><span class="p">)</span> <span class="o">:</span> <span class="n">db_</span><span class="p">(</span><span class="n">db</span><span class="p">)</span> <span class="p">{</span> <span class="n">CHECK</span><span class="p">(</span><span class="n">db_</span><span class="p">);</span> <span class="p">}</span>
+  <span class="k">virtual</span> <span class="o">~</span><span class="n">MyLists</span><span class="p">()</span> <span class="p">{}</span>
+
+  <span class="c1">// For prod code, we return a status or bool. Here, we just want to have fun.
+</span>  <span class="kt">void</span> <span class="n">Set</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="o">&amp;</span><span class="n">key</span><span class="p">,</span> <span class="k">const</span> <span class="n">MyList</span> <span class="o">&amp;</span><span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">string</span> <span class="n">v</span><span class="p">;</span>
+    <span class="n">Serialize</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">);</span>
+    <span class="n">Slice</span> <span class="n">slice</span><span class="p">(</span><span class="n">v</span><span class="p">);</span>
+    <span class="n">CHECK_STATUS</span><span class="p">(</span><span class="n">db_</span><span class="o">-&gt;</span><span class="n">Put</span><span class="p">(</span><span class="n">write_option_</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">slice</span><span class="p">));</span>
+  <span class="p">}</span>
+
+  <span class="kt">void</span> <span class="n">Add</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="o">&amp;</span><span class="n">key</span><span class="p">,</span> <span class="k">const</span> <span class="n">MyList</span> <span class="o">&amp;</span><span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">string</span> <span class="n">v</span><span class="p">;</span>
+    <span class="n">Serialize</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">);</span>
+    <span class="n">Slice</span> <span class="n">slice</span><span class="p">(</span><span class="n">v</span><span class="p">);</span>
+    <span class="n">CHECK_STATUS</span><span class="p">(</span><span class="n">db_</span><span class="o">-&gt;</span><span class="n">Merge</span><span class="p">(</span><span class="n">write_option_</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">slice</span><span class="p">));</span>
+  <span class="p">}</span>
+
+  <span class="kt">void</span> <span class="n">Remove</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="o">&amp;</span><span class="n">key</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">CHECK_STATUS</span><span class="p">(</span><span class="n">db_</span><span class="o">-&gt;</span><span class="n">Delete</span><span class="p">(</span><span class="n">write_option_</span><span class="p">,</span> <span class="n">key</span><span class="p">));</span>
+  <span class="p">}</span>
+
+  <span class="kt">bool</span> <span class="n">Get</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="o">&amp;</span><span class="n">key</span><span class="p">,</span> <span class="n">MyList</span> <span class="o">*</span><span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">str</span><span class="p">;</span>
+    <span class="k">auto</span> <span class="n">s</span> <span class="o">=</span> <span class="n">db_</span><span class="o">-&gt;</span><span class="n">Get</span><span class="p">(</span><span class="n">get_option_</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">str</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">IsNotFound</span><span class="p">())</span> <span class="p">{</span>
+      <span class="n">value</span><span class="o">-&gt;</span><span class="n">clear_data</span><span class="p">();</span>
+      <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">s</span><span class="p">.</span><span class="n">ok</span><span class="p">())</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">Deserialize</span><span class="p">(</span><span class="n">str</span><span class="p">,</span> <span class="n">value</span><span class="p">);</span>
+    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<h2 id="sample-run-1">Sample run 1</h2>
+
+<p>Finally, let’s run our code and see what is happening. Our first run does the following.</p>
+
+<ol>
+  <li>Set an initial value which is a list of two elements.</li>
+  <li>Push in five merge operands.</li>
+  <li>Do a GET and observe that a full merge involving five operands happened.</li>
+  <li>Do a GET and observe that a full merge involving five operands happened. (So every time you do a GET, you need a full merge, until there is a compaction.)</li>
+  <li>Force a compaction and observe that the same full merge happened.</li>
+  <li>Do a GET and observe that no merging happened because the compaction has done its job. (This point is important!)</li>
+</ol>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">Run1</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">DB</span><span class="o">&gt;</span> <span class="n">db</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">MyLists</span> <span class="n">lists</span><span class="p">(</span><span class="n">db</span><span class="p">);</span>
+  <span class="n">lists</span><span class="p">.</span><span class="n">Set</span><span class="p">(</span><span class="s">"a"</span><span class="p">,</span> <span class="n">BuildList</span><span class="p">({</span><span class="s">"jjj"</span><span class="p">,</span> <span class="s">"iii"</span><span class="p">}));</span>
+  <span class="n">lists</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="s">"a"</span><span class="p">,</span> <span class="n">BuildList</span><span class="p">({</span><span class="s">"hhh"</span><span class="p">,</span> <span class="s">"ggg"</span><span class="p">}));</span>
+  <span class="n">lists</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="s">"a"</span><span class="p">,</span> <span class="n">BuildList</span><span class="p">({</span><span class="s">"fff"</span><span class="p">}));</span>
+  <span class="n">lists</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="s">"a"</span><span class="p">,</span> <span class="n">BuildList</span><span class="p">({</span><span class="s">"eee"</span><span class="p">}));</span>
+  <span class="n">lists</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="s">"a"</span><span class="p">,</span> <span class="n">BuildList</span><span class="p">({</span><span class="s">"ddd"</span><span class="p">}));</span>
+  <span class="n">lists</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="s">"a"</span><span class="p">,</span> <span class="n">BuildList</span><span class="p">({</span><span class="s">"ccc"</span><span class="p">,</span> <span class="s">"bbb"</span><span class="p">,</span> <span class="s">"aaa"</span><span class="p">}));</span>
+  <span class="n">MyList</span> <span class="n">v</span><span class="p">;</span>
+  <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">"Running GET"</span><span class="p">;</span>
+  <span class="n">lists</span><span class="p">.</span><span class="n">Get</span><span class="p">(</span><span class="s">"a"</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">);</span>
+  <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">"Running GET"</span><span class="p">;</span>
+  <span class="n">lists</span><span class="p">.</span><span class="n">Get</span><span class="p">(</span><span class="s">"a"</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">);</span>
+  <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">"Forcing compaction"</span><span class="p">;</span>
+  <span class="n">CompactRangeOptions</span> <span class="n">compact_opt</span><span class="p">;</span>
+  <span class="n">CHECK_STATUS</span><span class="p">(</span><span class="n">db</span><span class="o">-&gt;</span><span class="n">CompactRange</span><span class="p">(</span><span class="n">compact_opt</span><span class="p">,</span> <span class="nb">nullptr</span><span class="p">,</span> <span class="nb">nullptr</span><span class="p">));</span>
+  <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">"Running GET"</span><span class="p">;</span>
+  <span class="n">lists</span><span class="p">.</span><span class="n">Get</span><span class="p">(</span><span class="s">"a"</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">);</span>
+  <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">v</span><span class="p">.</span><span class="n">DebugString</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Here is the output of the first run:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>I1229 09:15:54.934182 11041 merge_sets.cc:193] Running GET
+I1229 09:15:54.934286 11041 merge_sets.cc:116] FullMerge: existing_size=2 num_operands=5 final_list_size=10
+I1229 09:15:54.934306 11041 merge_sets.cc:195] Running GET
+I1229 09:15:54.934334 11041 merge_sets.cc:116] FullMerge: existing_size=2 num_operands=5 final_list_size=10
+I1229 09:15:54.934348 11041 merge_sets.cc:197] Forcing compaction
+I1229 09:15:54.942070 11043 merge_sets.cc:116] FullMerge: existing_size=2 num_operands=5 final_list_size=10
+I1229 09:15:54.982379 11041 merge_sets.cc:200] Running GET
+I1229 09:15:54.982792 11041 merge_sets.cc:202] data: "aaa"
+data: "bbb"
+data: "ccc"
+data: "ddd"
+data: "eee"
+data: "fff"
+data: "ggg"
+data: "hhh"
+data: "iii"
+data: "jjj"
+</code></pre></div></div>
+
+<h2 id="sample-run-2">Sample run 2</h2>
+
+<p>In our second run, we will create a snapshot in between our merges and observe that we need to do a partial merge. The steps are:</p>
+
+<ol>
+  <li>Set an initial value which is a list of two elements.</li>
+  <li>Push in just three merge operands.</li>
+  <li>Create a snapshot.</li>
+  <li>Push in two more merge operands.</li>
+  <li>Do a GET and observe that a full merge involving five operands happened.</li>
+  <li>Do a GET and observe that a full merge involving five operands happened.</li>
+  <li>Force a compaction and observe that unlike the previous run, we cannot do a full merge on five merge operands. Instead we see a full merge on three operands and a partial merge on two operands.</li>
+  <li>Do a GET and observe that we have a full merge involving one operand. The one operand is the output of the partial merge: <code class="highlighter-rouge">{aaa,bbb,ccc,ddd}</code>. The existing value is the output of the initial full merge and is of size 6: <code class="highlighter-rouge">{eee,fff,ggg,hhh,iii,jjj}</code>.</li>
+  <li>Release snapshot. Maybe do a sleep.</li>
+  <li>Force a compaction. We expect to see the same full merge involving one operand. However, this does not seem to happen. We’re not sure why.</li>
+  <li>Do a GET. We actually see a full merge involving one operand.</li>
+</ol>
+
+<p>Here is the code:</p>
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">Run2</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">DB</span><span class="o">&gt;</span> <span class="n">db</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">MyLists</span> <span class="n">lists</span><span class="p">(</span><span class="n">db</span><span class="p">);</span>
+  <span class="n">lists</span><span class="p">.</span><span class="n">Set</span><span class="p">(</span><span class="s">"a"</span><span class="p">,</span> <span class="n">BuildList</span><span class="p">({</span><span class="s">"jjj"</span><span class="p">,</span> <span class="s">"iii"</span><span class="p">}));</span>
+  <span class="n">lists</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="s">"a"</span><span class="p">,</span> <span class="n">BuildList</span><span class="p">({</span><span class="s">"hhh"</span><span class="p">,</span> <span class="s">"ggg"</span><span class="p">}));</span>
+  <span class="n">lists</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="s">"a"</span><span class="p">,</span> <span class="n">BuildList</span><span class="p">({</span><span class="s">"fff"</span><span class="p">}));</span>
+  <span class="n">lists</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="s">"a"</span><span class="p">,</span> <span class="n">BuildList</span><span class="p">({</span><span class="s">"eee"</span><span class="p">}));</span>
+  <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">"Creating snapshot"</span><span class="p">;</span>
+  <span class="k">auto</span> <span class="n">snapshot</span> <span class="o">=</span> <span class="n">db</span><span class="o">-&gt;</span><span class="n">GetSnapshot</span><span class="p">();</span>
+  <span class="n">lists</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="s">"a"</span><span class="p">,</span> <span class="n">BuildList</span><span class="p">({</span><span class="s">"ddd"</span><span class="p">}));</span>
+  <span class="n">lists</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="s">"a"</span><span class="p">,</span> <span class="n">BuildList</span><span class="p">({</span><span class="s">"ccc"</span><span class="p">,</span> <span class="s">"bbb"</span><span class="p">,</span> <span class="s">"aaa"</span><span class="p">}));</span>
+  <span class="n">MyList</span> <span class="n">v</span><span class="p">;</span>
+  <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">"Running GET"</span><span class="p">;</span>
+  <span class="n">lists</span><span class="p">.</span><span class="n">Get</span><span class="p">(</span><span class="s">"a"</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">);</span>
+  <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">"Running GET"</span><span class="p">;</span>
+  <span class="n">lists</span><span class="p">.</span><span class="n">Get</span><span class="p">(</span><span class="s">"a"</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">);</span>
+  <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">"Forcing compaction"</span><span class="p">;</span>
+  <span class="n">CompactRangeOptions</span> <span class="n">compact_opt</span><span class="p">;</span>
+  <span class="n">CHECK_STATUS</span><span class="p">(</span><span class="n">db</span><span class="o">-&gt;</span><span class="n">CompactRange</span><span class="p">(</span><span class="n">compact_opt</span><span class="p">,</span> <span class="nb">nullptr</span><span class="p">,</span> <span class="nb">nullptr</span><span class="p">));</span>
+  <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">"Running GET"</span><span class="p">;</span>
+  <span class="n">lists</span><span class="p">.</span><span class="n">Get</span><span class="p">(</span><span class="s">"a"</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">);</span>
+  <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">"Releasing snapshot"</span><span class="p">;</span>
+  <span class="n">db</span><span class="o">-&gt;</span><span class="n">ReleaseSnapshot</span><span class="p">(</span><span class="n">snapshot</span><span class="p">);</span>
+  <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">"Forcing compaction again"</span><span class="p">;</span>
+  <span class="n">CHECK_STATUS</span><span class="p">(</span><span class="n">db</span><span class="o">-&gt;</span><span class="n">CompactRange</span><span class="p">(</span><span class="n">compact_opt</span><span class="p">,</span> <span class="nb">nullptr</span><span class="p">,</span> <span class="nb">nullptr</span><span class="p">));</span>
+  <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">"Running GET"</span><span class="p">;</span>
+  <span class="n">lists</span><span class="p">.</span><span class="n">Get</span><span class="p">(</span><span class="s">"a"</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">);</span>
+  <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">v</span><span class="p">.</span><span class="n">DebugString</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Here are the logs:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>I1229 09:16:33.344550 11101 merge_sets.cc:211] Creating snapshot
+I1229 09:16:33.344672 11101 merge_sets.cc:216] Running GET
+I1229 09:16:33.344846 11101 merge_sets.cc:116] FullMerge: existing_size=2 num_operands=5 final_list_size=10
+I1229 09:16:33.344892 11101 merge_sets.cc:218] Running GET
+I1229 09:16:33.344969 11101 merge_sets.cc:116] FullMerge: existing_size=2 num_operands=5 final_list_size=10
+I1229 09:16:33.345005 11101 merge_sets.cc:220] Forcing compaction
+I1229 09:16:33.352044 11103 merge_sets.cc:132] PartialMerge: 2 operands, final list size 4
+I1229 09:16:33.352134 11103 merge_sets.cc:116] FullMerge: existing_size=2 num_operands=3 final_list_size=6
+I1229 09:16:33.392138 11101 merge_sets.cc:223] Running GET
+I1229 09:16:33.392293 11101 merge_sets.cc:116] FullMerge: existing_size=6 num_operands=1 final_list_size=10
+I1229 09:16:33.392343 11101 merge_sets.cc:225] Releasing snapshot
+I1229 09:16:33.392359 11101 merge_sets.cc:227] Forcing compaction again
+I1229 09:16:33.392410 11101 merge_sets.cc:229] Running GET
+I1229 09:16:33.392484 11101 merge_sets.cc:116] FullMerge: existing_size=6 num_operands=1 final_list_size=10
+I1229 09:16:33.392794 11101 merge_sets.cc:231] data: "aaa"
+data: "bbb"
+data: "ccc"
+data: "ddd"
+data: "eee"
+data: "fff"
+data: "ggg"
+data: "hhh"
+data: "iii"
+data: "jjj"
+</code></pre></div></div>
+
+<p>We are still puzzled why forcing a compaction after the snapshot is released did not cause a full merge (involving one operand) to happen. We have tried sleeping after releasing the snapshot and also creating more snapshots so that there’s two partial merges and two operands instead of one. However, we still observe no full merge when we compact after the release of snapshot(s). We are not sure why. In fact, even if we restart the program and reload the database and force a compaction, we still do not see a full merge happens due to the compaction. It is as if the snapshots are</p>
+
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=/articles/2018-12/rocksdb-merge-operators" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=/articles/2018-12/rocksdb-merge-operators" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=/articles/2018-12/rocksdb-merge-operators" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=/articles/2018-12/rocksdb-merge-operators" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=/articles/2018-12/rocksdb-merge-operators" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2018 Jiawei. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="/js/main.js"></script>
+
+
+</body>
+</html>
