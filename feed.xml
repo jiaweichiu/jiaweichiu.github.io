@@ -5,8 +5,8 @@
     <description>A simple blog!</description>
     <link>/</link>
     <atom:link href="/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>2018-12-29</pubDate>
-    <lastBuildDate>Sat, 29 Dec 2018 03:08:17 +0100</lastBuildDate>
+    <pubDate>2019-01-02</pubDate>
+    <lastBuildDate>Wed, 02 Jan 2019 14:48:13 +0100</lastBuildDate>
     <generator>Jekyll v3.7.4</generator>
     
       <item>
@@ -304,8 +304,27 @@ data: &quot;jjj&quot;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
 &lt;p&gt;We are still puzzled why forcing a compaction after the snapshot is released did not cause a full merge (involving one operand) to happen. We have tried sleeping after releasing the snapshot and also creating more snapshots so that there’s two partial merges and two operands instead of one. However, we still observe no full merge when we compact after the release of snapshot(s). We are not sure why. In fact, even if we restart the program and reload the database and force a compaction, we still do not see a full merge happens due to the compaction. It is as if the snapshots are&lt;/p&gt;
+
+&lt;h1 id=&quot;addenum-compactrange-vs-compactfiles&quot;&gt;Addenum: CompactRange vs CompactFiles&lt;/h1&gt;
+&lt;p&gt;We realize that &lt;code class=&quot;highlighter-rouge&quot;&gt;CompactRange&lt;/code&gt; only flushes the memtable to L0 SSTables on disk. When we call &lt;code class=&quot;highlighter-rouge&quot;&gt;CompactRange&lt;/code&gt; the second time, the memtable is empty and the L0 SSTables are small and do not need compaction. Hence, nothing happens. No merge. No compaction.&lt;/p&gt;
+
+&lt;p&gt;To force a compaction of the L0 SSTables, after the snapshot is released, we need to use &lt;code class=&quot;highlighter-rouge&quot;&gt;CompactFiles&lt;/code&gt;. In the main, we can use &lt;code class=&quot;highlighter-rouge&quot;&gt;FlushedFileCollector&lt;/code&gt; (found in RocksDB unit tests) to get the list of flushed files after the first compaction. Then we can pass these files to &lt;code class=&quot;highlighter-rouge&quot;&gt;CompactFiles&lt;/code&gt;.&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;Options&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;rdb_opt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;FlushedFileCollector&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;collector&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FlushedFileCollector&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;rdb_opt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;listeners&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;emplace_back&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;collector&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;In the actual run:&lt;/p&gt;
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;LOG&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;INFO&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Forcing compaction via CompactFiles&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// Now that snapshot is released, this should merge the two segments.
+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;vector&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;files&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;collector&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GetFlushedFiles&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;db&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CompactFiles&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CompactionOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;files&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;You will observe the full merge of two segments, one due to &lt;code class=&quot;highlighter-rouge&quot;&gt;PartialMerge&lt;/code&gt; earlier, the other due to &lt;code class=&quot;highlighter-rouge&quot;&gt;FullMerge&lt;/code&gt; earlier. Previously, these two segments cannot be merged due to a snapshot being held. After &lt;code class=&quot;highlighter-rouge&quot;&gt;CompactFiles&lt;/code&gt;, subsequent GET requests do not require any merging.&lt;/p&gt;
 </description>
-        <pubDate>2018-12-29</pubDate>
+        <pubDate>2019-01-02</pubDate>
         <link>/articles/2018-12/rocksdb-merge-operators</link>
         <guid isPermaLink="true">/articles/2018-12/rocksdb-merge-operators</guid>
         
@@ -405,7 +424,7 @@ data: &quot;jjj&quot;
 
 &lt;p&gt;Above we are just using coroutines to build “recursive generators”. We have not demonstrated any asynchronous IO. This can come in another post.&lt;/p&gt;
 </description>
-        <pubDate>2018-12-29</pubDate>
+        <pubDate>2019-01-02</pubDate>
         <link>/articles/2018-12/boost-coroutines-python-generators</link>
         <guid isPermaLink="true">/articles/2018-12/boost-coroutines-python-generators</guid>
         
@@ -467,7 +486,7 @@ data: &quot;jjj&quot;
 
 &lt;p&gt;As of Dec 2018, Spark only supports ALS for implicit datasets/feedback. See for example &lt;a href=&quot;https://spark.apache.org/docs/latest/mllib-collaborative-filtering.html#collaborative-filtering&quot;&gt;this link&lt;/a&gt;. I guess the reason is that in practice, it is rare to find large explicit datasets that needs the brute force of Spark, whereas implicit datasets tend to be much bigger and common.&lt;/p&gt;
 </description>
-        <pubDate>2018-12-29</pubDate>
+        <pubDate>2019-01-02</pubDate>
         <link>/articles/2018-11/implicit-recommender</link>
         <guid isPermaLink="true">/articles/2018-11/implicit-recommender</guid>
         
@@ -551,7 +570,7 @@ data: &quot;jjj&quot;
 
 &lt;p&gt;Read committed can be achieved by simply &lt;strong&gt;locking&lt;/strong&gt; on each row / key. There are some obvious problems, e.g., &lt;strong&gt;double count, missing count&lt;/strong&gt;. Say we want to count rows which fulfills a certain predicate. As we scan through rows in a transaction, we lock and unlock row by row, while concurrent transactions may be changing other rows that are not locked. If a row somehow gets shifted after the scan pointer, then it gets counted twice. If a row gets shifted before the scan pointer, then it does not get counted.&lt;/p&gt;
 </description>
-        <pubDate>2018-12-29</pubDate>
+        <pubDate>2019-01-02</pubDate>
         <link>/articles/2018-11/consistency-models</link>
         <guid isPermaLink="true">/articles/2018-11/consistency-models</guid>
         
@@ -732,7 +751,7 @@ data: &quot;jjj&quot;
   &lt;/ol&gt;
 &lt;/div&gt;
 </description>
-        <pubDate>2018-12-29</pubDate>
+        <pubDate>2019-01-02</pubDate>
         <link>/articles/2018-11/welcome-to-jekyll</link>
         <guid isPermaLink="true">/articles/2018-11/welcome-to-jekyll</guid>
         

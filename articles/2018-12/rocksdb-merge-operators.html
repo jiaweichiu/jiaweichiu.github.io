@@ -155,7 +155,7 @@
       <span class="read-time" title="Estimated read time">
   
   
-    15 mins read
+    17 mins read
   
 </span>
 
@@ -458,6 +458,25 @@ data: "jjj"
 
 <p>We are still puzzled why forcing a compaction after the snapshot is released did not cause a full merge (involving one operand) to happen. We have tried sleeping after releasing the snapshot and also creating more snapshots so that there’s two partial merges and two operands instead of one. However, we still observe no full merge when we compact after the release of snapshot(s). We are not sure why. In fact, even if we restart the program and reload the database and force a compaction, we still do not see a full merge happens due to the compaction. It is as if the snapshots are</p>
 
+<h1 id="addenum-compactrange-vs-compactfiles">Addenum: CompactRange vs CompactFiles</h1>
+<p>We realize that <code class="highlighter-rouge">CompactRange</code> only flushes the memtable to L0 SSTables on disk. When we call <code class="highlighter-rouge">CompactRange</code> the second time, the memtable is empty and the L0 SSTables are small and do not need compaction. Hence, nothing happens. No merge. No compaction.</p>
+
+<p>To force a compaction of the L0 SSTables, after the snapshot is released, we need to use <code class="highlighter-rouge">CompactFiles</code>. In the main, we can use <code class="highlighter-rouge">FlushedFileCollector</code> (found in RocksDB unit tests) to get the list of flushed files after the first compaction. Then we can pass these files to <code class="highlighter-rouge">CompactFiles</code>.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Options</span> <span class="n">rdb_opt</span><span class="p">;</span>
+<span class="n">FlushedFileCollector</span> <span class="o">*</span><span class="n">collector</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FlushedFileCollector</span><span class="p">();</span>
+<span class="n">rdb_opt</span><span class="p">.</span><span class="n">listeners</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">(</span><span class="n">collector</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>In the actual run:</p>
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">"Forcing compaction via CompactFiles"</span><span class="p">;</span>
+<span class="c1">// Now that snapshot is released, this should merge the two segments.
+</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">files</span> <span class="o">=</span> <span class="n">collector</span><span class="o">-&gt;</span><span class="n">GetFlushedFiles</span><span class="p">();</span>
+<span class="n">db</span><span class="o">-&gt;</span><span class="n">CompactFiles</span><span class="p">(</span><span class="n">CompactionOptions</span><span class="p">(),</span> <span class="n">files</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>You will observe the full merge of two segments, one due to <code class="highlighter-rouge">PartialMerge</code> earlier, the other due to <code class="highlighter-rouge">FullMerge</code> earlier. Previously, these two segments cannot be merged due to a snapshot being held. After <code class="highlighter-rouge">CompactFiles</code>, subsequent GET requests do not require any merging.</p>
+
   </article>
 </div>
 
@@ -485,7 +504,7 @@ data: "jjj"
 
 
         <footer>
-  &copy; 2018 Jiawei. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+  &copy; 2019 Jiawei. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
 </footer>
 
       </div>
