@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="Await-async style of coding in Javascript">
+  <meta name="keywords" content="blog and jekyll">
+  <meta name="author" content="Await async in Javascript | Blog of Jiawei Chiu">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Await async in Javascript | Blog of Jiawei Chiu">
+  <meta name="twitter:description" content="Await-async style of coding in Javascript">
+  
+    <meta property="twitter:image" content="/img/leonids-logo.png">
+  
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="/articles/2019-02/async-await">
+  <meta property="og:title" content="Await async in Javascript | Blog of Jiawei Chiu">
+  <meta property="og:description" content="Await-async style of coding in Javascript">
+  
+    <meta property="og:image" content="/img/leonids-logo.png">
+  
+  <title>Await async in Javascript | Blog of Jiawei Chiu</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="/css/font-awesome.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+
+  <link rel="canonical" href="/articles/2019-02/async-await">
+  <link rel="alternate" type="application/rss+xml" title="Blog of Jiawei Chiu" href="/feed.xml" />
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="/favicon.png">
+
+  <script type="text/javascript" async
+    src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+  </script>
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <a href="/">
+    <img src="/img/solth07212011.jpg" alt="" class="avatar">
+  </a>
+  
+  <a href="/" class="author_name">Jiawei</a>
+  <span class="author_job">Software engineer</span>
+  <span class="author_bio mbm">Just a simple blog that I hope to maintain!</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="/">home</a>
+      </li>
+       
+      <li class="nav-item">
+        <a href="/archive/">Archive</a>
+      </li>
+          
+      <li class="nav-item">
+        <a href="/categories/">Categories</a>
+      </li>
+            
+      <li class="nav-item">
+        <a href="/resume/">Resume</a>
+      </li>
+        
+      <li class="nav-item">
+        <a href="/tags/">Tags</a>
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="Await async in Javascript">Await async in Javascript</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        9 FEB 2019
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    3 mins read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <p>Just as in-memory “databases” like Redis sound like a bad idea, but turn out to be really useful because we recognize that (1) we have lots of memory and (2) many applications do not need to store that much hot data anyway. It is important to realize that times are changing, constraints have to be revisited and when the right tradeoffs are made, we can have a game changer. We have to dare to think different.</p>
+
+<p>Similarly, PHP, Ruby on rails, Node.js seems inefficient for server code, compared to  compiled languages like Go, but in practice, most of the workload is IO bound, and the interpreter overhead is insignificant. Node.js takes this assumption even further by using event loops and callbacks to avoid having tons of threads with huge overhead, all waiting for IO tasks to be completed.</p>
+
+<p>Using only callbacks to achieve concurrency is nice, but this code style is not palatable. Search for callback hells. Since then, we have made many attempts to improve the code style. We have seen libraries like async:</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">async</span><span class="p">.</span><span class="nx">waterfall</span><span class="p">([</span>
+    <span class="kd">function</span><span class="p">(</span><span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">callback</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="s1">'one'</span><span class="p">,</span> <span class="s1">'two'</span><span class="p">);</span>
+    <span class="p">},</span>
+    <span class="kd">function</span><span class="p">(</span><span class="nx">arg1</span><span class="p">,</span> <span class="nx">arg2</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// arg1 now equals 'one' and arg2 now equals 'two'</span>
+        <span class="nx">callback</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="s1">'three'</span><span class="p">);</span>
+    <span class="p">},</span>
+    <span class="kd">function</span><span class="p">(</span><span class="nx">arg1</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// arg1 now equals 'three'</span>
+        <span class="nx">callback</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="s1">'done'</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">],</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">result</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// result now equals 'done'</span>
+<span class="p">});</span>
+
+<span class="k">async</span><span class="p">.</span><span class="nx">waterfall</span><span class="p">([</span>
+    <span class="nx">myFirstFunction</span><span class="p">,</span>
+    <span class="nx">mySecondFunction</span><span class="p">,</span>
+    <span class="nx">myLastFunction</span><span class="p">,</span>
+<span class="p">],</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">result</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// result now equals 'done'</span>
+<span class="p">});</span>
+</code></pre></div></div>
+
+<p>This looks better but is still awkward. Ideally, the code should look as if it is synchronous. It should look as close as possible to:</p>
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">const</span> <span class="nx">x</span> <span class="o">=</span> <span class="nx">myFirstFunction</span><span class="p">();</span>
+<span class="kd">const</span> <span class="nx">y</span> <span class="o">=</span> <span class="nx">mySecondFunction</span><span class="p">(</span><span class="nx">x</span><span class="p">);</span>
+<span class="kd">const</span> <span class="nx">z</span> <span class="o">=</span> <span class="nx">myLastFunction</span><span class="p">(</span><span class="nx">y</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>A better style is with promise chaining:</p>
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">myFirstFunction</span><span class="p">()</span>
+<span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">mySecondFunction</span><span class="p">)</span>
+<span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">myLastFunction</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>This looks slightly neater than using <code class="highlighter-rouge">async.waterfall</code>, but still forces you to split your code into blocks whenever you need to call an asynchronous function. Each block has to be moved into a function, anonymous or not.</p>
+
+<p>To me, the current best way is with the new async-await. The code will look synchronous:</p>
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">const</span> <span class="nx">delay</span> <span class="o">=</span> <span class="p">(</span><span class="nx">ms</span><span class="p">,</span> <span class="nx">result</span><span class="p">)</span> <span class="o">=&gt;</span>
+  <span class="k">new</span> <span class="nb">Promise</span><span class="p">(</span><span class="nx">resolve</span> <span class="o">=&gt;</span> <span class="nx">setTimeout</span><span class="p">(()</span> <span class="o">=&gt;</span> <span class="nx">resolve</span><span class="p">(</span><span class="nx">result</span><span class="p">),</span> <span class="nx">ms</span><span class="p">));</span>
+
+<span class="k">async</span> <span class="kd">function</span> <span class="nx">delays</span><span class="p">()</span> <span class="p">{</span>
+  <span class="kd">let</span> <span class="nx">a</span> <span class="o">=</span> <span class="kr">await</span> <span class="nx">delay</span><span class="p">(</span><span class="mi">800</span><span class="p">,</span> <span class="s2">"Hello, I'm in an"</span><span class="p">);</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">a</span><span class="p">);</span>
+  <span class="kd">let</span> <span class="nx">b</span> <span class="o">=</span> <span class="kr">await</span> <span class="nx">delay</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="s2">"async function!"</span><span class="p">);</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">b</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="nx">delays</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>Previously, using promise chaining, you would need something like this:</p>
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">delay</span><span class="p">(</span><span class="mi">800</span><span class="p">,</span> <span class="s2">"Hello, I'm in an"</span><span class="p">)</span>
+<span class="p">.</span><span class="nx">then</span><span class="p">((</span><span class="nx">a</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">a</span><span class="p">);</span>
+  <span class="k">return</span> <span class="nx">delay</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="s2">"async function!"</span><span class="p">);</span>
+<span class="p">})</span>
+<span class="p">.</span><span class="nx">then</span><span class="p">((</span><span class="nx">b</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">b</span><span class="p">);</span>
+<span class="p">});</span>
+</code></pre></div></div>
+
+<p>The async-await style allows you to work with promises in a more natural way. Old async functions using callbacks can also be turned into functions that returns a promise via <code class="highlighter-rouge">util.promisify</code>.</p>
+
+<p>Finally, error handling is also easier with async-await than previous approaches. We shall not go into that.</p>
+
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=/articles/2019-02/async-await" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=/articles/2019-02/async-await" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=/articles/2019-02/async-await" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=/articles/2019-02/async-await" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=/articles/2019-02/async-await" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2019 Jiawei. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="/js/main.js"></script>
+
+
+</body>
+</html>
