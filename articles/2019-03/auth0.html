@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="Outsourcing user authentication, authorization to Auth0">
+  <meta name="keywords" content="blog and jekyll">
+  <meta name="author" content="User authentication, authorization with Auth0 | Blog of Jiawei Chiu">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <!-- Twitter Tags -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="User authentication, authorization with Auth0 | Blog of Jiawei Chiu">
+  <meta name="twitter:description" content="Outsourcing user authentication, authorization to Auth0">
+  
+    <meta property="twitter:image" content="/img/leonids-logo.png">
+  
+
+  <!-- Open Graph Tags -->
+  <meta property="og:type" content="blog">
+  <meta property="og:url" content="/articles/2019-03/auth0">
+  <meta property="og:title" content="User authentication, authorization with Auth0 | Blog of Jiawei Chiu">
+  <meta property="og:description" content="Outsourcing user authentication, authorization to Auth0">
+  
+    <meta property="og:image" content="/img/leonids-logo.png">
+  
+  <title>User authentication, authorization with Auth0 | Blog of Jiawei Chiu</title>
+
+  <!-- CSS files -->
+  <link rel="stylesheet" href="/css/font-awesome.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+
+  <link rel="canonical" href="/articles/2019-03/auth0">
+  <link rel="alternate" type="application/rss+xml" title="Blog of Jiawei Chiu" href="/feed.xml" />
+
+  <!-- Icons -->
+  <!-- 16x16 -->
+  <link rel="shortcut icon" href="/favicon.ico">
+  <!-- 32x32 -->
+  <link rel="shortcut icon" href="/favicon.png">
+
+  <script type="text/javascript" async
+    src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+  </script>
+</head>
+
+
+<body>
+  <div class="row">
+    <div class="col s12 m3">
+      <div class="table cover">
+        
+
+<div class="cover-card table-cell table-middle">
+  
+  <a href="/">
+    <img src="/img/solth07212011.jpg" alt="" class="avatar">
+  </a>
+  
+  <a href="/" class="author_name">Jiawei</a>
+  <span class="author_job">Software engineer</span>
+  <span class="author_bio mbm">Just a simple blog that I hope to maintain!</span>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="/">home</a>
+      </li>
+       
+      <li class="nav-item">
+        <a href="/archive/">Archive</a>
+      </li>
+          
+      <li class="nav-item">
+        <a href="/categories/">Categories</a>
+      </li>
+            
+      <li class="nav-item">
+        <a href="/resume/">Resume</a>
+      </li>
+        
+      <li class="nav-item">
+        <a href="/tags/">Tags</a>
+      </li>
+         
+    </ul>
+  </nav>
+  <script type="text/javascript">
+  // based on http://stackoverflow.com/a/10300743/280842
+  function gen_mail_to_link(hs, subject) {
+    var lhs,rhs;
+    var p = hs.split('@');
+    lhs = p[0];
+    rhs = p[1];
+    document.write("<a class=\"social-link-item\" target=\"_blank\" href=\"mailto");
+    document.write(":" + lhs + "@");
+    document.write(rhs + "?subject=" + subject + "\"><i class=\"fa fa-fw fa-envelope\"></i><\/a>");
+  }
+</script>
+<div class="social-links">
+  <ul>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  </ul>
+</div>
+
+</div>
+
+      </div>
+    </div>
+    <div class="col s12 m9">
+      <div class="post-listing">
+        <a class="btn" href= "/" >
+  Home
+</a>
+
+
+
+<div id="post">
+  <header class="post-header">
+    <h1 title="User authentication, authorization with Auth0">User authentication, authorization with Auth0</h1>
+    <span class="post-meta">
+      <span class="post-date">
+        17 MAR 2019
+      </span>
+      •
+      <span class="read-time" title="Estimated read time">
+  
+  
+    7 mins read
+  
+</span>
+
+    </span>
+
+  </header>
+
+  <article class="post-content">
+    <p>Just a quick post about Auth0. The point is that authentication, authorization can be tricky, especially when you want to support a bunch of features like 2FA, user management, SSO (Single Sign On), passwordless, etc. We also do not like having to deal with user-password database logic. It seems that Auth0 (and many other competitors) offers an easy and cheap way out.</p>
+
+<p>For web related development, I am more used to JS, but let’s do some Python Flask. (1) Sign up on Auth0 and (2) create an Application on their dashboard and (3) create an API on their dashboard as we want to protect some REST API. From the application, we have Client ID, Client Secret, Auth0 Domain or Auth0 Base URL. From the API, we have the API identifier, aka Auth0 Audience.</p>
+
+<p>During app initialization, just specify all these parameters:</p>
+<div class="language-py highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">authlib.flask.client</span> <span class="kn">import</span> <span class="n">OAuth</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+<span class="n">app</span><span class="o">.</span><span class="n">secret_key</span> <span class="o">=</span> <span class="n">SECRET_KEY</span>
+
+<span class="n">oauth</span> <span class="o">=</span> <span class="n">OAuth</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+<span class="n">auth0</span> <span class="o">=</span> <span class="n">oauth</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+    <span class="s">'auth0'</span><span class="p">,</span>
+    <span class="n">client_id</span><span class="o">=</span><span class="n">AUTH0_CLIENT_ID</span><span class="p">,</span>
+    <span class="n">client_secret</span><span class="o">=</span><span class="n">AUTH0_CLIENT_SECRET</span><span class="p">,</span>
+    <span class="n">api_base_url</span><span class="o">=</span><span class="n">AUTH0_BASE_URL</span><span class="p">,</span>
+    <span class="n">access_token_url</span><span class="o">=</span><span class="n">AUTH0_BASE_URL</span> <span class="o">+</span> <span class="s">'/oauth/token'</span><span class="p">,</span>
+    <span class="n">authorize_url</span><span class="o">=</span><span class="n">AUTH0_BASE_URL</span> <span class="o">+</span> <span class="s">'/authorize'</span><span class="p">,</span>
+    <span class="n">client_kwargs</span><span class="o">=</span><span class="p">{</span>
+        <span class="s">'scope'</span><span class="p">:</span> <span class="s">'openid profile'</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+</code></pre></div></div>
+
+<p>To login and obtain a token, all we need is a few lines of code!</p>
+<div class="language-py highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@app.route</span><span class="p">(</span><span class="s">'/login'</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">login</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">auth0</span><span class="o">.</span><span class="n">authorize_redirect</span><span class="p">(</span>
+        <span class="n">redirect_uri</span><span class="o">=</span><span class="n">url_for</span><span class="p">(</span><span class="s">'callback'</span><span class="p">,</span> <span class="n">_external</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span>
+        <span class="n">audience</span><span class="o">=</span><span class="n">AUTH0_AUDIENCE</span><span class="p">)</span>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s">"/callback"</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">callback</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">auth0</span><span class="o">.</span><span class="n">authorize_access_token</span><span class="p">())</span>
+</code></pre></div></div>
+
+<p>Basically, we provided to OAuth a callback URL. After the user signs in, our callback endpoint <code class="highlighter-rouge">/callback</code> is hit and the <code class="highlighter-rouge">auth0</code> object can process and return us <code class="highlighter-rouge">access_token</code> (not to be confused with <code class="highlighter-rouge">id_token</code>). If you did not specify an API / Auth0 Audience, then <code class="highlighter-rouge">access_token</code> would not be JWT and is much shorter and is to with used only with Auth0’s endpoints at Auth0 Base URL. However, we did specify the Auth0 Audience, so <code class="highlighter-rouge">access_token</code> is a JWT. Here is the sample output:</p>
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="s2">"access_token"</span><span class="p">:</span><span class="w"> </span><span class="s2">"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IlFUQkROalJFUlRZMVFUWTBNMFUxUkVJNE16Y3lOMFV5TnpZMk1UUXpNekU0TVRFMk56WkdNUSJ9.eyJpc3MiOiJodHRwczovL2Rldi1vNG56cjM1cy5hdXRoMC5jb20vIiwic3ViIjoiYXV0aDB8NWM4YTRiYTM3YjdlZWM2NDAyMjI4NjcxIiwiYXVkIjpbIm15dGVzdGFwaSIsImh0dHBzOi8vZGV2LW80bnpyMzVzLmF1dGgwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE1NTI3ODQ4NTgsImV4cCI6MTU1Mjg3MTI1OCwiYXpwIjoiTE44WUR1MWhXckVTbjM5bmUxdTh3SFMwRkw1VVVKRnEiLCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIn0.gutSVg4YpzFO9b0UcFiUDOy4nR9epRXDX1vapuj4BI9Q8H0EN0eFX1UYBA5O2mIyQWVAwtyLBL5fnJCA6bGORRARxhPiMt7ObKY1U5PHYCUET70V4QRaAo-Qk-iv8_86XKyeKIUPR41r-DJcxBHbifyFr7bFMD6cRotBIMgj9WOn8-sX5blr_zyuON_hDJxTSbqkxjS4ZJetvHdfhBZXvTcfKJ9wptryfYq7QXRDz05-Z4z1v0DYXET9JO1eIGDVFoZODMdiFnHQIu2cuCZ4pGF0mVKReAtetjlGydB9Zsr0XppeWJXEb3MjfDfIEAiHUhKzc96WVVFFKXLwxa8A-w"</span><span class="p">,</span><span class="w">
+  </span><span class="s2">"expires_at"</span><span class="p">:</span><span class="w"> </span><span class="mi">1552871259</span><span class="p">,</span><span class="w">
+  </span><span class="s2">"expires_in"</span><span class="p">:</span><span class="w"> </span><span class="mi">86400</span><span class="p">,</span><span class="w">
+  </span><span class="s2">"id_token"</span><span class="p">:</span><span class="w"> </span><span class="s2">"........."</span><span class="p">,</span><span class="w">
+  </span><span class="s2">"token_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Bearer"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Our user can take <code class="highlighter-rouge">access_token</code> and specify in subsequent calls to our API. We will add a typical <code class="highlighter-rouge">require_auth</code> decorator to check this header. This is taken from this <a href="https://github.com/auth0-samples/auth0-python-api-samples/tree/master/00-Starter-Seed">link</a> and it seems easy to adapt.</p>
+
+<div class="language-py highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">jsonify</span><span class="p">,</span> <span class="n">redirect</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">url_for</span><span class="p">,</span> <span class="n">g</span>
+<span class="kn">from</span> <span class="nn">urllib.request</span> <span class="kn">import</span> <span class="n">urlopen</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">jose</span> <span class="kn">import</span> <span class="n">jwt</span>
+
+
+<span class="k">class</span> <span class="nc">AuthError</span><span class="p">(</span><span class="nb">Exception</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">status_code</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">error</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="n">status_code</span>
+
+
+<span class="k">def</span> <span class="nf">get_token_auth_header</span><span class="p">():</span>
+    <span class="s">"""Obtains the access token from the Authorization Header."""</span>
+    <span class="n">auth</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">"Authorization"</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">auth</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">AuthError</span><span class="p">({</span>
+            <span class="s">"code"</span><span class="p">:</span> <span class="s">"authorization_header_missing"</span><span class="p">,</span>
+            <span class="s">"description"</span><span class="p">:</span> <span class="s">"Authorization header is expected"</span>
+        <span class="p">},</span> <span class="mi">401</span><span class="p">)</span>
+
+    <span class="n">parts</span> <span class="o">=</span> <span class="n">auth</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s">"bearer"</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">AuthError</span><span class="p">({</span>
+            <span class="s">"code"</span><span class="p">:</span> <span class="s">"invalid_header"</span><span class="p">,</span>
+            <span class="s">"description"</span><span class="p">:</span> <span class="s">"Authorization header must start with Bearer"</span>
+        <span class="p">},</span> <span class="mi">401</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">AuthError</span><span class="p">({</span>
+            <span class="s">"code"</span><span class="p">:</span> <span class="s">"invalid_header"</span><span class="p">,</span>
+            <span class="s">"description"</span><span class="p">:</span> <span class="s">"Token not found"</span>
+        <span class="p">},</span> <span class="mi">401</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">AuthError</span><span class="p">({</span>
+            <span class="s">"code"</span><span class="p">:</span> <span class="s">"invalid_header"</span><span class="p">,</span>
+            <span class="s">"description"</span><span class="p">:</span> <span class="s">"Authorization header must be Bearer token"</span>
+        <span class="p">},</span> <span class="mi">401</span><span class="p">)</span>
+    <span class="n">token</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">token</span>
+
+
+<span class="k">def</span> <span class="nf">requires_auth</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+    <span class="s">"""Determines if the access token is valid."""</span>
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">decorated</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">token</span> <span class="o">=</span> <span class="n">get_token_auth_header</span><span class="p">()</span>
+        <span class="n">jsonurl</span> <span class="o">=</span> <span class="n">urlopen</span><span class="p">(</span><span class="s">"https://"</span> <span class="o">+</span> <span class="n">AUTH0_DOMAIN</span> <span class="o">+</span> <span class="s">"/.well-known/jwks.json"</span><span class="p">)</span>
+        <span class="n">jwks</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">jsonurl</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">unverified_header</span> <span class="o">=</span> <span class="n">jwt</span><span class="o">.</span><span class="n">get_unverified_header</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">jwt</span><span class="o">.</span><span class="n">JWTError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">AuthError</span><span class="p">({</span><span class="s">"code"</span><span class="p">:</span> <span class="s">"invalid_header"</span><span class="p">,</span>
+                             <span class="s">"description"</span><span class="p">:</span>
+                             <span class="s">"Invalid header. "</span>
+                             <span class="s">"Use an RS256 signed JWT Access Token"</span><span class="p">},</span> <span class="mi">401</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">unverified_header</span><span class="p">[</span><span class="s">"alg"</span><span class="p">]</span> <span class="o">==</span> <span class="s">"HS256"</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">AuthError</span><span class="p">({</span><span class="s">"code"</span><span class="p">:</span> <span class="s">"invalid_header"</span><span class="p">,</span>
+                             <span class="s">"description"</span><span class="p">:</span>
+                             <span class="s">"Invalid header. "</span>
+                             <span class="s">"Use an RS256 signed JWT Access Token"</span><span class="p">},</span> <span class="mi">401</span><span class="p">)</span>
+        <span class="n">rsa_key</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">jwks</span><span class="p">[</span><span class="s">"keys"</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">key</span><span class="p">[</span><span class="s">"kid"</span><span class="p">]</span> <span class="o">==</span> <span class="n">unverified_header</span><span class="p">[</span><span class="s">"kid"</span><span class="p">]:</span>
+                <span class="n">rsa_key</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s">"kty"</span><span class="p">:</span> <span class="n">key</span><span class="p">[</span><span class="s">"kty"</span><span class="p">],</span>
+                    <span class="s">"kid"</span><span class="p">:</span> <span class="n">key</span><span class="p">[</span><span class="s">"kid"</span><span class="p">],</span>
+                    <span class="s">"use"</span><span class="p">:</span> <span class="n">key</span><span class="p">[</span><span class="s">"use"</span><span class="p">],</span>
+                    <span class="s">"n"</span><span class="p">:</span> <span class="n">key</span><span class="p">[</span><span class="s">"n"</span><span class="p">],</span>
+                    <span class="s">"e"</span><span class="p">:</span> <span class="n">key</span><span class="p">[</span><span class="s">"e"</span><span class="p">]</span>
+                <span class="p">}</span>
+        <span class="k">if</span> <span class="n">rsa_key</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">payload</span> <span class="o">=</span> <span class="n">jwt</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span>
+                    <span class="n">token</span><span class="p">,</span>
+                    <span class="n">rsa_key</span><span class="p">,</span>
+                    <span class="n">algorithms</span><span class="o">=</span><span class="n">ALGORITHMS</span><span class="p">,</span>
+                    <span class="n">audience</span><span class="o">=</span><span class="n">AUTH0_AUDIENCE</span><span class="p">,</span>
+                    <span class="n">issuer</span><span class="o">=</span><span class="s">"https://"</span> <span class="o">+</span> <span class="n">AUTH0_DOMAIN</span> <span class="o">+</span> <span class="s">"/"</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="n">jwt</span><span class="o">.</span><span class="n">ExpiredSignatureError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">AuthError</span><span class="p">({</span><span class="s">"code"</span><span class="p">:</span> <span class="s">"token_expired"</span><span class="p">,</span>
+                                 <span class="s">"description"</span><span class="p">:</span> <span class="s">"token is expired"</span><span class="p">},</span> <span class="mi">401</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">jwt</span><span class="o">.</span><span class="n">JWTClaimsError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">AuthError</span><span class="p">({</span><span class="s">"code"</span><span class="p">:</span> <span class="s">"invalid_claims"</span><span class="p">,</span>
+                                 <span class="s">"description"</span><span class="p">:</span>
+                                 <span class="s">"incorrect claims,"</span>
+                                 <span class="s">" please check the audience and issuer"</span><span class="p">},</span> <span class="mi">401</span><span class="p">)</span>
+            <span class="k">except</span> <span class="nb">Exception</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">AuthError</span><span class="p">({</span><span class="s">"code"</span><span class="p">:</span> <span class="s">"invalid_header"</span><span class="p">,</span>
+                                 <span class="s">"description"</span><span class="p">:</span>
+                                 <span class="s">"Unable to parse authentication"</span>
+                                 <span class="s">" token."</span><span class="p">},</span> <span class="mi">401</span><span class="p">)</span>
+            <span class="n">g</span><span class="o">.</span><span class="n">auth</span> <span class="o">=</span> <span class="n">payload</span>
+            <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">AuthError</span><span class="p">({</span><span class="s">"code"</span><span class="p">:</span> <span class="s">"invalid_header"</span><span class="p">,</span>
+                         <span class="s">"description"</span><span class="p">:</span> <span class="s">"Unable to find appropriate key"</span><span class="p">},</span> <span class="mi">401</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">decorated</span>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s">'/validate'</span><span class="p">)</span>
+<span class="nd">@requires_auth</span>
+<span class="k">def</span> <span class="nf">validate</span><span class="p">():</span>
+    <span class="s">"""Validate token"""</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">auth</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Observe that when the authorization succeeds, the thread-local request context <code class="highlighter-rouge">g</code> will contain <code class="highlighter-rouge">payload</code> which looks like this:</p>
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="s2">"iss"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://dev-aaaaaaaa.auth0.com/"</span><span class="p">,</span><span class="w">
+  </span><span class="s2">"sub"</span><span class="p">:</span><span class="w"> </span><span class="s2">"auth0|5c8a4ba37b7eec6402228671"</span><span class="p">,</span><span class="w">
+  </span><span class="s2">"aud"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"mytestapi"</span><span class="p">,</span><span class="w"> </span><span class="s2">"https://dev-aaaaaaaa.auth0.com/userinfo"</span><span class="p">],</span><span class="w">
+  </span><span class="s2">"iat"</span><span class="p">:</span><span class="w"> </span><span class="mi">1552722298</span><span class="p">,</span><span class="w">
+  </span><span class="s2">"exp"</span><span class="p">:</span><span class="w"> </span><span class="mi">1552808698</span><span class="p">,</span><span class="w">
+  </span><span class="s2">"azp"</span><span class="p">:</span><span class="w"> </span><span class="s2">"LN8YDu1hWrESn39ne1u8wHS0FL5UUJFq"</span><span class="p">,</span><span class="w">
+  </span><span class="s2">"scope"</span><span class="p">:</span><span class="w"> </span><span class="s2">"openid profile"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>We can also get userinfo by hitting Auth0 Base URL’s <code class="highlighter-rouge">/userinfo</code>.</p>
+
+  </article>
+</div>
+
+<div class="share-buttons">
+  <h6>Share on: </h6>
+  <ul>
+    <li>
+      <a href="https://twitter.com/intent/tweet?text=/articles/2019-03/auth0" class="twitter btn" title="Share on Twitter"><i class="fa fa-twitter"></i><span> Twitter</span></a>
+    </li>
+    <li>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=/articles/2019-03/auth0" class="facebook btn" title="Share on Facebook"><i class="fa fa-facebook"></i><span> Facebook</span></a>
+    </li>
+    <li>
+      <a href="https://plus.google.com/share?url=/articles/2019-03/auth0" class="google-plus btn" title="Share on Google Plus"><i class="fa fa-google-plus"></i><span> Google+</span></a>
+    </li>
+    <li>
+      <a href="https://news.ycombinator.com/submitlink?u=/articles/2019-03/auth0" class="hacker-news btn" title="Share on Hacker News"><i class="fa fa-hacker-news"></i><span> Hacker News</span></a>
+    </li>
+    <li>
+      <a href="https://www.reddit.com/submit?url=/articles/2019-03/auth0" class="reddit btn" title="Share on Reddit"><i class="fa fa-reddit"></i><span> Reddit</span></a>
+    </li>
+  </ul>
+</div><!-- end share-buttons -->
+
+
+
+        <footer>
+  &copy; 2019 Jiawei. Powered by <a href="http://jekyllrb.com/">Jekyll</a>, <a href="http://github.com/renyuanz/leonids/">leonids theme</a> made with <i class="fa fa-heart heart-icon"></i>
+</footer>
+
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="/js/main.js"></script>
+
+
+</body>
+</html>
