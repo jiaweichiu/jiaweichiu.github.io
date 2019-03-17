@@ -6,7 +6,7 @@
     <link>/</link>
     <atom:link href="/feed.xml" rel="self" type="application/rss+xml"/>
     <pubDate>2019-03-17</pubDate>
-    <lastBuildDate>Sun, 17 Mar 2019 02:33:09 +0100</lastBuildDate>
+    <lastBuildDate>Sun, 17 Mar 2019 02:46:51 +0100</lastBuildDate>
     <generator>Jekyll v3.7.4</generator>
     
       <item>
@@ -180,7 +180,7 @@
 &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
 &lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;p&gt;We can also get userinfo by hitting Auth0 Base URL’s &lt;code class=&quot;highlighter-rouge&quot;&gt;/userinfo&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;We can also get userinfo by hitting Auth0 Base URL’s &lt;code class=&quot;highlighter-rouge&quot;&gt;/userinfo&lt;/code&gt; with our &lt;code class=&quot;highlighter-rouge&quot;&gt;access_token&lt;/code&gt;.&lt;/p&gt;
 </description>
         <pubDate>2019-03-17</pubDate>
         <link>/articles/2019-03/auth0</link>
